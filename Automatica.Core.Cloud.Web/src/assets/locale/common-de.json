@@ -1,0 +1,55 @@
+{
+    "COMMON": {
+        "LOGIN": {
+            "NAME": "Login",
+            "USERNAME": "Benutzename",
+            "PASSWORD": "Passwort",
+            "PASSWORD_REPEAT": "Passwort wiederholen",
+            "SIGN_UP": "Anmelden",
+            "FORGOT_PW": "Passwort vergessen?",
+            "RESET_PW_INFO": "Gib deine E-Mail Addresse ein. Wir senden dir eine E-Mail mit deinem Benutzername und einen Link zum zurücksetzen deines Passworts.",
+            "RESET": "Passwort zurücksetzen"
+        },
+        "USER": {
+            "FIRSTNAME": "Vorname",
+            "LASTNAME": "Nachname",
+            "MAIL": "E-Mail"
+        },
+        "VERSION": "Version",
+        "CHANGELOG": "Changelog",
+        "VERSIONS": {
+            "PRERELEASE": "Pre-Release",
+            "IS_PUBLIC": "Öffentlich",
+            "TITLE": "Automatica.Core Server Version"
+        },
+        "SAVE": "Speichern",
+        "DOWNLOAD": "Herunterladen",
+        "LOADING": "Laden...",
+        "UPLOAD": "Hochladen...",
+        "UPLOAD_DROP": "Oder hier fallen lassen...",
+        "NOTHING_SELECTED": "Nichts ausgewählt...",
+        "ABORT": "Abbrechen",
+        "SERVERS": {
+            "SERVER_GUID": "Server Id",
+            "LAST_KNOWN_CONNECTION": "Letzte Verbindung",
+            "SERVER": "Core Server"
+        },
+        "NAME": "Name",
+        "RID": "Runtime Identifier",
+        "API_KEY": "API Key",
+        "LICENSE": {
+            "MAX_DATAPOINTS": "Max Datenpunkte",
+            "MAX_USERS": "Max Benutzer",
+            "KEY": "Lizenz",
+            "FEATURES": "Features"
+        },
+        "PLUGINS": {
+            "TITLE": "Plugins",
+            "TYPE": "Typ",
+            "PUBLISHER": "Veröffentlicher",
+            "MIN_CORE_SERVER_VERSION": "Min Automatica.Core Server Version"
+        },
+        "LICENSED_TO": "Lizenziert für",
+        "EMAIL": "Email"
+    }
+}

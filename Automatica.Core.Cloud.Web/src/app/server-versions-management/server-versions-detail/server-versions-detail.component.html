@@ -1,0 +1,35 @@
+<core-cloud-form [name]="'serverVersionForm'" [loading]="loading">
+  <ng-template #template let-item>
+
+    <core-cloud-editor [title]="'COMMON.VERSION'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.version"></dx-text-box>
+    </core-cloud-editor>    
+
+    <core-cloud-editor [title]="'COMMON.CHANGELOG'">
+      <dx-text-area valueChangeEvent="keyup" [(value)]="item.changeLog" height="200"></dx-text-area>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.RID'">
+      <dx-select-box [dataSource]="ridData" displayExpr="name" valueExpr="value" [(value)]="item.rid"></dx-select-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.VERSIONS.PRERELEASE'">
+      <dx-check-box class="float-left" valueChangeEvent="keyup" [(value)]="item.isPrerelease"></dx-check-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.VERSIONS.IS_PUBLIC'">
+      <dx-check-box class="float-left" valueChangeEvent="keyup" [(value)]="item.isPublic"></dx-check-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor>
+      <dx-file-uploader selectButtonText="{{ 'COMMON.UPLOAD' | translate:lang }}" labelText="{{ 'COMMON.UPLOAD_DROP' | translate:lang }}"
+        accept="*" uploadMode="instantly" *ngIf="!item.isNewObject" [uploadUrl]="uploadUrl" [uploadHeaders]="uploadHeader"
+        (onUploadStarted)="uploadStarted($event)" (onUploaded)="onUploadDone($event)" (onUploadError)="onUploadError($event)">
+      </dx-file-uploader>
+    </core-cloud-editor>
+
+    <core-cloud-editor>
+      <dx-button class="float-left" (click)="download($event)" *ngIf="item && item.azureUrl" text="{{'COMMON.DOWNLOAD' | translate:lang}}"></dx-button>
+    </core-cloud-editor>
+  </ng-template>
+</core-cloud-form>

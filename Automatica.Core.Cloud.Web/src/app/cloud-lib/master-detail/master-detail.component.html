@@ -1,0 +1,16 @@
+<as-split direction="horizontal" [gutterSize]="5">
+  <as-split-area size="30">
+    <div class="margin" class="core-full-height-2">
+      <ng-container master>
+        <ng-content select=[master]></ng-content>
+      </ng-container>
+    </div>
+  </as-split-area>
+  <as-split-area size="70">
+    <div class="margin" class="core-full-height-2">
+      <ng-container detail>
+        <ng-content select=[detail]></ng-content>
+      </ng-container>
+    </div>
+  </as-split-area>
+</as-split>
