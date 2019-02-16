@@ -1,0 +1,17 @@
+export * from './coreCliData.service';
+import { CoreCliDataService } from './coreCliData.service';
+export * from './coreServer.service';
+import { CoreServerService } from './coreServer.service';
+export * from './coreServerData.service';
+import { CoreServerDataService } from './coreServerData.service';
+export * from './coreServerVersions.service';
+import { CoreServerVersionsService } from './coreServerVersions.service';
+export * from './info.service';
+import { InfoService } from './info.service';
+export * from './license.service';
+import { LicenseService } from './license.service';
+export * from './plugins.service';
+import { PluginsService } from './plugins.service';
+export * from './user.service';
+import { UserService } from './user.service';
+export const APIS = [CoreCliDataService, CoreServerService, CoreServerDataService, CoreServerVersionsService, InfoService, LicenseService, PluginsService, UserService];

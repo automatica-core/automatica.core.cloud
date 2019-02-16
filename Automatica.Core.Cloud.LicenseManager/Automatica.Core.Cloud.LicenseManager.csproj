@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj" />
+
+    <PackageReference Include="Standard.Licensing" Version="1.1.5" />
+  </ItemGroup>
+
+</Project>

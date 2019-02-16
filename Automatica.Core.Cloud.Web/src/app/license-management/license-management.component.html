@@ -1,0 +1,14 @@
+<div class="container-fluid no-breadcrumbs page-dashboard">
+  <div class="row core-full-height">
+
+    <core-master-detail>
+      <ng-container master>
+        <core-cloud-list [columns]="['this2CoreServerNavigation.serverName','maxDatapoints','maxUsers']"></core-cloud-list>
+      </ng-container>
+      <ng-container detail>
+       <core-license-detail></core-license-detail>
+      </ng-container>
+    </core-master-detail>
+
+  </div>
+</div>

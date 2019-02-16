@@ -1,0 +1,24 @@
+<div class="container-fluid no-breadcrumbs page-dashboard" style="background-color: white">
+  <div class="row core-full-height">
+
+    <core-master-detail>
+      <ng-container master>
+        <core-cloud-list #cloudList [columns]="['name', 'version']" [showUploadButton]="true" (onUpload)="upload($event)"></core-cloud-list>
+      </ng-container>
+      <ng-container detail>
+        <core-plugin-detail></core-plugin-detail>
+      </ng-container>
+    </core-master-detail>
+
+  </div>
+</div>
+
+<dx-popup class="popup" [width]="500" [height]="200" [showTitle]="true" [dragEnabled]="false"
+  [closeOnOutsideClick]="false" [showCloseButton]="true" [(visible)]="popupVisible">
+  <div *dxTemplate="let data of 'content'">
+    <dx-file-uploader class="float-left" selectButtonText="{{ 'COMMON.UPLOAD' | translate:lang }}" labelText="{{ 'COMMON.UPLOAD_DROP' | translate:lang }}"
+      accept="*" uploadMode="instantly" [uploadUrl]="uploadUrl" [uploadHeaders]="uploadHeader" (onUploadStarted)="uploadStarted($event)"
+      (onUploaded)="onUploadDone($event)" (onUploadError)="onUploadError($event)">
+    </dx-file-uploader>
+  </div>
+</dx-popup>

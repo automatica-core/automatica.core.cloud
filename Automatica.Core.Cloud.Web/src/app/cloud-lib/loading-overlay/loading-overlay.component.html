@@ -1,0 +1,6 @@
+<dx-popup class="popup" [width]="300" [height]="250" [showTitle]="true" [title]="loadingService.title" [dragEnabled]="false"
+  [closeOnOutsideClick]="false" [(visible)]="loadingService.popupVisible" [showCloseButton]="false">
+  <div *dxTemplate="let data of 'content'">
+    <dx-load-indicator class="center"></dx-load-indicator>
+  </div>
+</dx-popup>
