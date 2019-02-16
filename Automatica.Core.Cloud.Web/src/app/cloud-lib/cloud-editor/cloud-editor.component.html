@@ -1,0 +1,7 @@
+<div class="dx-field" style="margin-bottom: 5px">
+  <div *ngIf="title" class="dx-field-label" translate>{{title}}</div>
+  <div *ngIf="!title" class="dx-field-label"></div>
+  <div class="dx-field-value float-left">
+    <ng-content #ngContent [ngTemplateOutlet]="template"></ng-content>
+  </div>
+</div>

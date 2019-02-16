@@ -1,0 +1,38 @@
+<core-cloud-form #cloudForm [name]="'serverVersionForm'" [loading]="loading">
+  <ng-template #template let-item>
+
+    <core-cloud-editor [title]="'COMMON.SERVERS.SERVER'">
+      <dx-select-box (onValueChanged)="serverChaned($event)" [items]="servers" [value]="item.this2CoreServer" valueExpr="objId"
+        displayExpr="serverName" [readOnly]="!item.isNewObject"></dx-select-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSED_TO'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.licensedTo"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.EMAIL'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.email"></dx-text-box>
+    </core-cloud-editor>
+
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.MAX_DATAPOINTS'">
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxDatapoints"></dx-number-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.MAX_USERS'">
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxUsers"></dx-number-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.KEY'">
+      <dx-text-area [readOnly]="true" valueChangeEvent="keyup" [(value)]="item.licenseKey" [height]="400"></dx-text-area>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.FEATURES'">
+      <dx-data-grid [dataSource]="licenseService.features" keyExpr="featureName" [(selectedRowKeys)]="selectedFeatures">
+        <dxo-selection mode="multiple"></dxo-selection>
+        <dxi-column dataField="featureName" caption="Name"></dxi-column>
+      </dx-data-grid>
+    </core-cloud-editor>
+
+  </ng-template>
+</core-cloud-form>

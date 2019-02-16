@@ -1,0 +1,33 @@
+<core-cloud-form [name]="'serverVersionForm'" [loading]="loading">
+  <ng-template #template let-item>
+
+    <core-cloud-editor [title]="'COMMON.NAME'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.serverName"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.SERVERS.SERVER_GUID'" *ngIf="item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.serverGuid"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.SERVERS.SERVER_GUID'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.serverGuid" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.SERVERS.LAST_KNOWN_CONNECTION'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownConnection" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.VERSION'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.version" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.RID'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.rid" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.API_KEY'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.apiKey" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+    
+  </ng-template>
+</core-cloud-form>

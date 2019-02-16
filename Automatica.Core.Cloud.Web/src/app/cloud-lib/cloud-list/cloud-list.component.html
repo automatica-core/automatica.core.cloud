@@ -1,0 +1,24 @@
+<div class="box box-default" style="height: 100%">
+  <div class="box-body padding-lg">
+    <div class="row">
+      <div class="col-xl">
+
+        <div style="height: 100%">
+          <h2 class="article-title" translate>{{baseFormService.title}}</h2>
+          <div class="mdl-card__actions mdl-card--border">
+            <dx-button style="margin-right: 2px" (click)="add($event)" icon="fa fa-plus"></dx-button>
+            <dx-button style="margin-right: 2px" (click)="delete($event)" icon="fa fa-minus"></dx-button>
+            <dx-button style="margin-right: 2px" (click)="refresh($event)" icon="fa fa-refresh"></dx-button>
+            <dx-button *ngIf="showUploadButton" style="margin-right: 2px" (click)="upload($event)" icon="fa fa-upload"></dx-button>
+          </div>
+          <dx-data-grid #grid keyExpr="objId" id="gridContainer" [dataSource]="baseFormService.dataSource" [columns]="columns"
+            [showBorders]="true" [(selectedRowKeys)]="baseFormService.selectedRows" (onSelectionChanged)="selectionChanged($event)">
+            <dxo-selection mode="single"></dxo-selection>
+            <dxo-group-panel [visible]="true"></dxo-group-panel>
+            <dxo-grouping #expand [autoExpandAll]="true"></dxo-grouping>
+          </dx-data-grid>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

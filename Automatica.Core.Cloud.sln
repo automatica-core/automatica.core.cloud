@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28124.53
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatica.Core.Cloud", "Automatica.Core.Cloud\Automatica.Core.Cloud.csproj", "{BEE98072-6DB7-44B6-9444-9CC3580C6677}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatica.Core.Cloud.EF", "Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj", "{D7882A44-E7D1-4379-84DC-B33ABB14743D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Automatica.Core.Cloud.WebApi", "Automatica.Core.Cloud.WebApi\Automatica.Core.Cloud.WebApi.csproj", "{93DB3B33-9258-4D29-910F-671E6CAC0273}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Automatica.Core.Cloud.LicenseManager", "Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj", "{99AD4799-B1BE-487F-B9BB-388AD4B95316}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEE98072-6DB7-44B6-9444-9CC3580C6677}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEE98072-6DB7-44B6-9444-9CC3580C6677}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEE98072-6DB7-44B6-9444-9CC3580C6677}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEE98072-6DB7-44B6-9444-9CC3580C6677}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7882A44-E7D1-4379-84DC-B33ABB14743D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7882A44-E7D1-4379-84DC-B33ABB14743D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7882A44-E7D1-4379-84DC-B33ABB14743D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7882A44-E7D1-4379-84DC-B33ABB14743D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93DB3B33-9258-4D29-910F-671E6CAC0273}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93DB3B33-9258-4D29-910F-671E6CAC0273}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93DB3B33-9258-4D29-910F-671E6CAC0273}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93DB3B33-9258-4D29-910F-671E6CAC0273}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99AD4799-B1BE-487F-B9BB-388AD4B95316}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99AD4799-B1BE-487F-B9BB-388AD4B95316}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99AD4799-B1BE-487F-B9BB-388AD4B95316}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99AD4799-B1BE-487F-B9BB-388AD4B95316}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
