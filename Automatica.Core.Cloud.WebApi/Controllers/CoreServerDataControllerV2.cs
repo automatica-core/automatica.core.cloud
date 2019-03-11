@@ -95,13 +95,16 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}/{serverGuid}")]
-        public IList<Plugin> GetAvailablePlugins(string coreServerVersion)
+        public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
         {
             using (var dbContext = new CoreContext(Config))
             {
                 var versionObj = new System.Version(coreServerVersion);
                 var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
-                return versions;
+
+                return from r in versions
+                       group r by r.PluginGuid into g
+                       select g.OrderByDescending(x_ => x_.VersionObj).First();
             }
         }
 
