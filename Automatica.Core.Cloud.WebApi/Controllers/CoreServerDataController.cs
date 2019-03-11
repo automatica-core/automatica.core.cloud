@@ -128,7 +128,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
-        public IList<Plugin> GetAvailablePlugins(string coreServerVersion)
+        public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
         {
             var versionObj = new Version(coreServerVersion);
             if (versionObj >= new Version(0, 6))
@@ -138,7 +138,9 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             using (var dbContext = new CoreContext(Config))
             {
                 var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
-                return versions;
+                return from r in versions
+                       group r by r.PluginGuid into g
+                       select g.OrderByDescending(x_ => x_.VersionObj).First();
             }
         }
 
