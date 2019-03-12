@@ -1,1 +1,3 @@
 *.css linguist-vendored
+*.scss linguist-vendored
+Automatica.Core.Cloud.Web/src/styles/* linguist-vendored
