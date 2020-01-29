@@ -9,13 +9,19 @@
             <dx-button style="margin-right: 2px" (click)="add($event)" icon="fa fa-plus"></dx-button>
             <dx-button style="margin-right: 2px" (click)="delete($event)" icon="fa fa-minus"></dx-button>
             <dx-button style="margin-right: 2px" (click)="refresh($event)" icon="fa fa-refresh"></dx-button>
-            <dx-button *ngIf="showUploadButton" style="margin-right: 2px" (click)="upload($event)" icon="fa fa-upload"></dx-button>
+            <dx-button *ngIf="showUploadButton" style="margin-right: 2px" (click)="upload($event)" icon="fa fa-upload">
+            </dx-button>
           </div>
-          <dx-data-grid #grid keyExpr="objId" id="gridContainer" [dataSource]="baseFormService.dataSource" [columns]="columns"
-            [showBorders]="true" [(selectedRowKeys)]="baseFormService.selectedRows" (onSelectionChanged)="selectionChanged($event)">
+          <dx-data-grid #grid keyExpr="objId" id="gridContainer" [dataSource]="baseFormService.dataSource"
+            [columns]="columns" [showBorders]="true" [(selectedRowKeys)]="baseFormService.selectedRows"
+            (onSelectionChanged)="selectionChanged($event)">
             <dxo-selection mode="single"></dxo-selection>
             <dxo-group-panel [visible]="true"></dxo-group-panel>
             <dxo-grouping #expand [autoExpandAll]="true"></dxo-grouping>
+
+            <dxo-filter-row [visible]="true"></dxo-filter-row>
+            <dxo-header-filter [visible]="true"></dxo-header-filter>
+            <dxo-search-panel [visible]="true" [width]="240" placeholder="Search..."></dxo-search-panel>
           </dx-data-grid>
         </div>
       </div>

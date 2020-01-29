@@ -37,6 +37,7 @@ namespace Automatica.Core.Cloud.EF.Models
             {
                 entity.HasKey(a => a.ObjId);
                 entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.Branch).HasDefaultValue("develop");
             });
 
             modelBuilder.Entity<Plugin>(entity =>
@@ -45,6 +46,7 @@ namespace Automatica.Core.Cloud.EF.Models
                 entity.HasOne(a => a.This2UserNavigation).WithMany().HasForeignKey(a => a.This2User);
 
                 entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.Branch).HasDefaultValue("develop");
             });
 
             modelBuilder.Entity<PluginFeature>(entity =>
