@@ -8,13 +8,13 @@ const AppRoutes: Routes = [
             {
                 path: "dashboard", component: DashboardComponent
             }, {
-                path: "versions", loadChildren: "../server-versions-management/server-versions-management.module#ServerVersionsManagementModule"
+                path: "versions", loadChildren: () => import('../server-versions-management/server-versions-management.module').then(m => m.ServerVersionsManagementModule)
             }, {
-                path: "plugins", loadChildren: "../plugins/plugins.module#PluginsModule"
+                path: "plugins", loadChildren: () => import('../plugins/plugins.module').then(m => m.PluginsModule)
             }, {
-                path: "servers", loadChildren: "../server-connections-management/server-connections-management.module#ServerConnectionsManagementModule"
+                path: "servers", loadChildren: () => import('../server-connections-management/server-connections-management.module').then(m => m.ServerConnectionsManagementModule)
             }, {
-                path: "licenses", loadChildren: "../license-management/license-management.module#LicenseManagementModule"
+                path: "licenses", loadChildren: () => import('../license-management/license-management.module').then(m => m.LicenseManagementModule)
             }
         ]
     }

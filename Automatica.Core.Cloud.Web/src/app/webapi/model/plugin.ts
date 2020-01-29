@@ -35,6 +35,7 @@ export interface Plugin {
     readonly this2UserNavigation?: User;
     licenseFeatures?: Array<PluginFeature>;
     isNewObject?: boolean;
+    branch?: string;
 }
 export namespace Plugin {
     export type PluginTypeEnum = 0 | 1;

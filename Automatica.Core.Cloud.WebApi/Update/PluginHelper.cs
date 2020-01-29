@@ -42,7 +42,7 @@ namespace Automatica.Core.Cloud.WebApi.Update
             return ret;
         }
 
-        public static async Task<PluginManifest> UploadAndSave(CoreContext dbContext, ILogger logger, IFormFile myFile, CloudBlobContainer container, Guid apiKey)
+        public static async Task<PluginManifest> UploadAndSave(CoreContext dbContext, ILogger logger, IFormFile myFile, CloudBlobContainer container, Guid apiKey, string branch)
         {
             var manifest = await GetPluginManifest(myFile, logger);
 
@@ -63,8 +63,9 @@ namespace Automatica.Core.Cloud.WebApi.Update
             if (version == null)
             {
                 isNewUpdate = true;
-                version = new Plugin()
+                version = new Plugin
                 {
+                    Branch = branch,
                     IsPublic = false,
                     Name = manifest.Automatica.Name,
                     Version = manifest.Automatica.PluginVersion.ToString(),
@@ -104,7 +105,7 @@ namespace Automatica.Core.Cloud.WebApi.Update
                 version.Version = manifest.Automatica.PluginVersion.ToString();
                 version.MinCoreServerVersion = manifest.Automatica.MinCoreServerVersion.ToString();
             }
-            if (await UploadPluginFile(logger, myFile, container, version, manifest.Automatica.PluginVersion))
+            if (await UploadPluginFile(logger, myFile, container, version, manifest.Automatica.PluginVersion, branch))
             {
                 if (isNewUpdate)
                 {
@@ -119,12 +120,12 @@ namespace Automatica.Core.Cloud.WebApi.Update
             return manifest;
         }
 
-        public static async Task<bool> UploadPluginFile(ILogger logger, IFormFile myFile, CloudBlobContainer container, EF.Models.Plugin plugin, Version packageVersion)
+        public static async Task<bool> UploadPluginFile(ILogger logger, IFormFile myFile, CloudBlobContainer container, Plugin plugin, Version packageVersion, string branch)
         {
             var targetLocation = Path.GetTempPath();
 
             var fileName = Path.GetFileName(myFile.FileName);
-            var azureFileName = $"{packageVersion}-{fileName}";
+            var azureFileName = $"{packageVersion}-{branch}-{fileName}";
             CloudBlockBlob blob = container.GetBlockBlobReference(azureFileName);
             await blob.DeleteIfExistsAsync();
 
@@ -150,12 +151,11 @@ namespace Automatica.Core.Cloud.WebApi.Update
             }
 
             blob.Metadata.Add("version", packageVersion.ToString());
+            blob.Metadata.Add("branch", branch);
             await blob.SetMetadataAsync();
 
             plugin.AzureUrl = blob.Uri.ToString();
             plugin.AzureFileName = azureFileName;
-
-
 
             if (File.Exists(path))
             {
