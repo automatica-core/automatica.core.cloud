@@ -3,7 +3,7 @@
 
     <core-master-detail>
       <ng-container master>
-        <core-cloud-list #cloudList [columns]="['name', 'version']" [showUploadButton]="true" (onUpload)="upload($event)"></core-cloud-list>
+        <core-cloud-list #cloudList [columns]="['name', 'version', 'pluginGuid', 'branch']" [showUploadButton]="true" (onUpload)="upload($event)"></core-cloud-list>
       </ng-container>
       <ng-container detail>
         <core-plugin-detail></core-plugin-detail>

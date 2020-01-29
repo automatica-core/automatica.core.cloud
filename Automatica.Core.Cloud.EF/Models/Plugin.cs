@@ -19,6 +19,8 @@ namespace Automatica.Core.Cloud.EF.Models
 
         public Guid ObjId { get; set; }
 
+        public string Branch { get; set; }
+
         public Guid PluginGuid { get; set; }
         public string Name { get; set; }
         public string Version { get; set; }

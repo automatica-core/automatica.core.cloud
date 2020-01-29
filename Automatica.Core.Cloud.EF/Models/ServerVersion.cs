@@ -28,5 +28,7 @@ namespace Automatica.Core.Cloud.EF.Models
         public bool IsPublic { get; set; }
 
         public string Rid { get; set; }
+
+        public string Branch { get; set; }
     }
 }

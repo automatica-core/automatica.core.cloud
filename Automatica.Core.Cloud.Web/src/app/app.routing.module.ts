@@ -7,7 +7,7 @@ import { ResetPasswordComponent } from "./reset-password/reset-password.componen
 const AppRoutes: Routes = [
     { path: "", pathMatch: "full", redirectTo: "admin" },
     {
-        path: "admin", loadChildren: "./layout/layout.module#LayoutModule", canActivate: [AuthGuard]
+        path: "admin", loadChildren: () => import('./layout/layout.module').then(m => m.LayoutModule), canActivate: [AuthGuard]
     }, {
         path: "login", component: LoginComponent
     }, {

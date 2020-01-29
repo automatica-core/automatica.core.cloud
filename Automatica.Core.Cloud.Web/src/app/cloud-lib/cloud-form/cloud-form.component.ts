@@ -11,7 +11,7 @@ import { LoadingOverlayService } from "../loading-overlay/loading-overlay.servic
 })
 export class CloudFormComponent implements OnInit {
 
-  @ContentChild(TemplateRef)
+  @ContentChild(TemplateRef, { static: true })
   template: TemplateRef<any>;
 
   @Input()

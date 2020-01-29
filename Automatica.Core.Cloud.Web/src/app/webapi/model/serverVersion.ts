@@ -23,4 +23,5 @@ export interface ServerVersion {
     isPublic?: boolean;
     rid?: string;
     isNewObject?: boolean;
+    branch?: string;
 }

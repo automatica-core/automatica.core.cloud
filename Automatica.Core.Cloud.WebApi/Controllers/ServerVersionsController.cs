@@ -71,7 +71,15 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             }
         }
 
-        
+        [HttpDelete, Route("deleteAllButLatest")]
+        public Task DeleteAllButLatest()
+        {
+            var versions = DbContext.Versions.OrderByDescending(a => a.VersionObj).GroupBy(a => a.Rid);
+
+            return Task.CompletedTask;
+        }
+
+
         [HttpPost, Route("")]
         public ServerVersion Save([FromBody] ServerVersion serverVersion)
         {

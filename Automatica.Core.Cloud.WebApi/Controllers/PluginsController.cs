@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage.Blob;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -49,7 +48,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 throw new ArgumentException("Invalid user");
             }
-            await PluginHelper.UploadAndSave(DbContext, Logger, myFile, container, user.ApiKey);
+            await PluginHelper.UploadAndSave(DbContext, Logger, myFile, container, user.ApiKey, "develop");
         }
 
         [HttpPost, Route("{objId}/upload")]
@@ -65,7 +64,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             var container = GetCloudBlobContainer();
             var myFile = Request.Form.Files[0];
 
-            if(await PluginHelper.UploadPluginFile(Logger, myFile, container, plugin, plugin.VersionObj))
+            if(await PluginHelper.UploadPluginFile(Logger, myFile, container, plugin, plugin.VersionObj, "develop"))
             {
                 var manifest = await PluginHelper.GetPluginManifest(myFile, Logger);
                 plugin.Name = manifest.Automatica.Name;
@@ -120,7 +119,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             }
             else
             {
-                plugin.This2User = DbContext.Users.FirstOrDefault(a => a.UserName == "sa").ObjId;
+                plugin.This2User = DbContext.Users.First(a => a.UserName == "sa").ObjId;
                 DbContext.Plugins.Add(plugin);
             }
             DbContext.SaveChanges();
