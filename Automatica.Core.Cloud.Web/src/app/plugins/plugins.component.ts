@@ -19,7 +19,7 @@ export class PluginsComponent implements OnInit {
     return "/webapi/v1/plugins/upload";
   }
 
-  @ViewChild("cloudList")
+  @ViewChild("cloudList", {static: true})
   cloudList: CloudListComponent;
 
   popupVisible = false;

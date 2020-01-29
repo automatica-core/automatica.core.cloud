@@ -72,11 +72,11 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpDelete, Route("deleteAllButLatest")]
-        public async Task DeleteAllButLatest()
+        public Task DeleteAllButLatest()
         {
             var versions = DbContext.Versions.OrderByDescending(a => a.VersionObj).GroupBy(a => a.Rid);
 
-
+            return Task.CompletedTask;
         }
 
 

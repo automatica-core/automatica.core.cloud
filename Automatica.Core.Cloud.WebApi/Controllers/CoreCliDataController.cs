@@ -14,7 +14,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 {
     [Route("v{version:apiVersion}/coreCliData"), ApiVersion("1.0")]
     [AllowAnonymous]
-    [UserApiKeyAuthorization]
+    [UserApiKeyAuthorization] // API Key must be at the last position!!
     [NeedsRole(UserRole.SystemAdministrator)]
     [DisableRequestSizeLimit]
     public class CoreCliDataController : AzureStorageController
@@ -29,7 +29,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public ILogger Logger { get; }
         
 
-        [HttpPost, Route("deployPlugin/{deleteOldPackages}/{apiKey}/{branch}")]
+        [HttpPost, Route("deployPlugin/{deleteOldPackages}/{branch}/{apiKey}")]
         [DisableRequestSizeLimit]
         [NeedsRole(UserRole.SystemAdministrator)]
         public async Task DeployPluginAndDelete(Guid apiKey, bool deleteOldPackages, string branch)
@@ -42,7 +42,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             if(deleteOldPackages)
             {
                 // delete only other plugins with the same min core server version to stay compatible
-                var others = DbContext.Plugins.Where(a => a.VersionObj < manifest.Automatica.PluginVersion && a.MinCoreServerVersionObj == manifest.Automatica.MinCoreServerVersion && a.Name == manifest.Automatica.Name);
+                var others = DbContext.Plugins.Where(a => a.VersionObj < manifest.Automatica.PluginVersion && a.MinCoreServerVersionObj == manifest.Automatica.MinCoreServerVersion && a.Name == manifest.Automatica.Name && a.Branch == branch);
 
                 foreach(var other in others)
                 {
@@ -54,7 +54,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             }
         }
 
-        [HttpPost, Route("deployPlugin/{deleteOldPackages}/{apiKey}/{branch}")]
+        [HttpPost, Route("deployPlugin/{deleteOldPackages}/{apiKey}")]
         [DisableRequestSizeLimit]
         [NeedsRole(UserRole.SystemAdministrator)]
         public async Task DeployPluginAndDeleteWithoutSpecificBranch(Guid apiKey, bool deleteOldPackages)
@@ -70,10 +70,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             await DeployPluginAndDelete(apiKey, false, "develop");
         }
 
-        [HttpPost, Route("deploy/{apiKey}")]
+        [HttpPost, Route("deploy/{branch}/{apiKey}")]
         [DisableRequestSizeLimit]
         [NeedsRole(UserRole.SystemAdministrator)]
-        public async Task Deploy()
+        public async Task Deploy(string branch)
         {
             var container = GetCloudBlobContainer();
             var myFile = Request.Form.Files[0];
@@ -82,7 +82,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
             if (manifest == null)
             {
-                throw new ArgumentException("Invalid file..."); 
+                throw new ArgumentException("Invalid file...");
             }
             var version = DbContext.Versions.SingleOrDefault(a => a.VersionObj == manifest.Version && a.Rid == manifest.Rid);
             var isNewUpdate = false;
@@ -95,7 +95,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                     IsPrerelease = manifest.PreRelease,
                     Rid = manifest.Rid,
                     ChangeLog = "",
-                    Version = manifest.Version.ToString()
+                    Version = manifest.Version.ToString(),
+                    Branch = branch
                 };
             }
             if (await UpdateHelper.UploadUpdateFile(Logger, myFile, container, version))
@@ -113,18 +114,33 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             }
         }
 
+        [HttpPost, Route("deploy/{apiKey}")]
+        [DisableRequestSizeLimit]
+        [NeedsRole(UserRole.SystemAdministrator)]
+        public Task Deploy()
+        {
+            return Deploy("develop");
+        }
+
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
         [NeedsRole(UserRole.SystemAdministrator)]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
         {
+            return GetAvailablePlugins(coreServerVersion, "develop");
+        }
+
+        [HttpGet, Route("plugins/{coreServerVersion}/{branch}/{apiKey}")]
+        [NeedsRole(UserRole.SystemAdministrator)]
+        public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion, string branch)
+        {
             using (var dbContext = new CoreContext(Config))
             {
                 var versionObj = new Version(coreServerVersion);
-                var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
+                var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
 
                 return from r in versions
-                                        group r by r.PluginGuid into g
-                                        select g.OrderByDescending(x => x.VersionObj).First();
+                    group r by r.PluginGuid into g
+                    select g.OrderByDescending(x => x.VersionObj).First();
             }
         }
     }
