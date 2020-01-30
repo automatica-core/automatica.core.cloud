@@ -65,7 +65,7 @@ export class CloudListComponent implements OnInit {
       await this.baseFormService.delete(objId);
     } finally {
       this.baseFormService.dataSource = this.baseFormService.dataSource.filter(a => a.objId !== objId);
-      this.baseFormService.selectedRows = [];
+      this.baseFormService.selectedRows = this.baseFormService.selectedRows.filter(a => a !== objId);
     }
   }
 

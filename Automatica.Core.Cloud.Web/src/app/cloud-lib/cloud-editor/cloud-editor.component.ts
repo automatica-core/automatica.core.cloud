@@ -8,7 +8,7 @@ import { Component, OnInit, ViewChild, ElementRef, Input } from "@angular/core";
 export class CloudEditorComponent implements OnInit {
 
 
-  @ViewChild("content")
+  @ViewChild("content", {static: true})
   template: ElementRef;
 
   @Input()
