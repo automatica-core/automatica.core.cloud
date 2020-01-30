@@ -81,10 +81,16 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}/{serverGuid}")]
         public ServerVersion CheckForUpdates(string rid, string coreServerVersion)
         {
+            return CheckForUpdates(rid, coreServerVersion, "develop");
+        }
+
+        [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
+        public ServerVersion CheckForUpdates(string rid, string coreServerVersion, string branch)
+        {
             using (var dbContext = new CoreContext(Config))
             {
                 var versionObj = new Version(coreServerVersion);
-                var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid).OrderByDescending(a => a.VersionObj).ToList();
+                var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
 
                 if (versions.Count > 0)
                 {
