@@ -1,8 +1,8 @@
 import { Directive, ElementRef, Input, AfterViewInit } from "@angular/core";
 import "jquery-slimscroll/jquery.slimscroll.min.js";
+declare var $: any;
 
 @Directive({ selector: "[coreSlimScroll]" })
-
 export class SlimScrollDirective implements AfterViewInit {
 
   @Input()

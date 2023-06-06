@@ -28,6 +28,14 @@
     <core-cloud-editor [title]="'COMMON.API_KEY'" *ngIf="!item.isNewObject">
       <dx-text-box valueChangeEvent="keyup" [(value)]="item.apiKey" [readOnly]="true"></dx-text-box>
     </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.NGROK'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownNgrokUrl" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.NGROK_DATE'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownNgrokUrlDate" [readOnly]="true"></dx-text-box>
+    </core-cloud-editor>
     
   </ng-template>
 </core-cloud-form>

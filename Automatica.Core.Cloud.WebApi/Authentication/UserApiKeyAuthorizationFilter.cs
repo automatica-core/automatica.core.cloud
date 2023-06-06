@@ -37,7 +37,7 @@ namespace Automatica.Core.Cloud.WebApi.Authentication
             }
            
             var uri = context.HttpContext.Request.Path.Value.Split("/", StringSplitOptions.RemoveEmptyEntries);
-            var apiKey = uri[uri.Length - 1];
+            var apiKey = uri[^1];
             try
             {
                 var existing = Context.Users.SingleOrDefault(a => a.ApiKey == new Guid(apiKey));
@@ -45,6 +45,7 @@ namespace Automatica.Core.Cloud.WebApi.Authentication
                 if(existing == null)
                 {
                     context.Result = new ForbidResult();
+                    return;
                 }
 
                 if(existing.UserRole < needsRole)

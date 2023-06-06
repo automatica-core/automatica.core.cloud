@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    [Route("v{version:apiVersion}/coreServerVersion"), ApiVersion("1.0")]
+    [Route("webapi/v{version:apiVersion}/coreServerVersion"), ApiVersion("1.0")]
     [UserExists]
     [AuthorizeRole(Role = UserRole.SystemAdministrator)]
     public class CoreServerVersionsController : AzureStorageController

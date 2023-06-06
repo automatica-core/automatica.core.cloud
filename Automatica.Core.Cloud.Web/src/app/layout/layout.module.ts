@@ -12,10 +12,10 @@ import { NavbarMenuComponent } from "./navbar-menu/navbar-menu.component";
 import { AutoCloseMobileNavDirective } from "./navbar/auto-close-mobile-nav.directive";
 import { ToggleOffcanvasNavDirective } from "./header/toggle-offcanvas-nav.directive";
 import { SharedModule } from "../shared/shared.module";
-import {MatButtonModule, MatCheckboxModule} from "@angular/material";
+
+import { MatButtonModule } from '@angular/material/button';
 import { DashboardModule } from "../dashboard/dashboard.module";
-import { ServerVersionsManagementModule } from "../server-versions-management/server-versions-management.module";
-import { ServerConnectionsManagementModule } from "../server-connections-management/server-connections-management.module";
+import { RouterModule } from "@angular/router";
 
 @NgModule({
   imports: [
@@ -23,7 +23,8 @@ import { ServerConnectionsManagementModule } from "../server-connections-managem
     LayoutRoutingModule,
     SharedModule,
     MatButtonModule,
-    DashboardModule
+    DashboardModule,
+    RouterModule
   ],
   declarations: [
     LayoutComponent,

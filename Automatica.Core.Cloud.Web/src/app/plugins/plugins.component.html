@@ -16,7 +16,7 @@
 <dx-popup class="popup" [width]="500" [height]="200" [showTitle]="true" [dragEnabled]="false"
   [closeOnOutsideClick]="false" [showCloseButton]="true" [(visible)]="popupVisible">
   <div *dxTemplate="let data of 'content'">
-    <dx-file-uploader class="float-left" selectButtonText="{{ 'COMMON.UPLOAD' | translate:lang }}" labelText="{{ 'COMMON.UPLOAD_DROP' | translate:lang }}"
+    <dx-file-uploader class="float-left" selectButtonText="{{ 'COMMON.UPLOAD' | translate }}" labelText="{{ 'COMMON.UPLOAD_DROP' | translate }}"
       accept="*" uploadMode="instantly" [uploadUrl]="uploadUrl" [uploadHeaders]="uploadHeader" (onUploadStarted)="uploadStarted($event)"
       (onUploaded)="onUploadDone($event)" (onUploadError)="onUploadError($event)">
     </dx-file-uploader>

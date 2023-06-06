@@ -3,8 +3,7 @@ import { CommonModule } from "@angular/common";
 import { LicenseManagementComponent } from "./license-management.component";
 import { LicenseDetailComponent } from "./license-detail/license-detail.component";
 import { FormsModule } from "@angular/forms";
-import { MatIconModule, MatButtonModule, MatFormFieldModule, MatCheckboxModule, MatInputModule } from "@angular/material";
-import { TranslationModule } from "angular-l10n";
+import { L10nTranslationModule } from "angular-l10n";
 import { CloudLibModule } from "../cloud-lib/cloud-lib.module";
 import { MasterDetailModule } from "../cloud-lib/master-detail/master-detail.module";
 import { CloudFormModule } from "../cloud-lib/cloud-form/cloud-form.module";
@@ -21,7 +20,7 @@ import { CloudEditorModule } from "../cloud-lib/cloud-editor/cloud-editor.module
     FormsModule,
     CommonModule,
 
-    TranslationModule,
+    L10nTranslationModule,
     CloudLibModule,
     MasterDetailModule,
     CloudFormModule,

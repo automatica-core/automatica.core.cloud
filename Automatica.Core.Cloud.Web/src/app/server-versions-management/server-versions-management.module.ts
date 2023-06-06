@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { ServerVersionsManagementComponent } from "./server-versions-management.component";
 import { AngularSplitModule } from "angular-split";
 import { DxDataGridModule, DxFileUploaderModule, DxTextBoxModule, DxCheckBoxModule, DxTextAreaModule, DxButtonModule, DxSelectBoxModule } from "devextreme-angular";
-import { TranslationModule } from "angular-l10n";
+import { L10nTranslationModule } from "angular-l10n";
 import { FormsModule } from "@angular/forms";
 import { CloudLibModule } from "../cloud-lib/cloud-lib.module";
 import { MasterDetailModule } from "../cloud-lib/master-detail/master-detail.module";
@@ -19,7 +19,7 @@ import { CloudEditorModule } from "../cloud-lib/cloud-editor/cloud-editor.module
   imports: [
     FormsModule,
     CommonModule,
-    TranslationModule,
+    L10nTranslationModule,
     CloudLibModule,
     MasterDetailModule,
     CloudFormModule,

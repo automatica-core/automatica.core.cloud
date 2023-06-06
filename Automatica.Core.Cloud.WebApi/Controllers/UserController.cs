@@ -24,21 +24,21 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public string Password { get; set; }
     }
 
-    [Route("v{version:apiVersion}/user"), ApiVersion("1.0")]
+    [Route("webapi/v{version:apiVersion}/user"), ApiVersion("1.0")]
+    [AllowAnonymous]
     public class UserController : BaseController
     {
         private readonly CoreContext _context;
-        private readonly JwtInfoProvider info;
+        private readonly JwtInfoProvider _info;
 
         public UserController(CoreContext context, JwtInfoProvider info)
         {
             _context = context;
-            this.info = info;
+            _info = info;
         }
 
         [HttpPost]
         [Route("login")]
-        [AllowAnonymous]
         public async Task<User> Login([FromBody]UserAuthData data)
         {
             var user = await _context.Users.SingleOrDefaultAsync(a => a.UserName == data.UserName);
@@ -135,7 +135,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 IsPersistent = true
             };
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = info.Key;
+            var key = _info.Key;
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = claimsIdentity,

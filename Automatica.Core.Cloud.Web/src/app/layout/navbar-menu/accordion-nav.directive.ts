@@ -1,4 +1,5 @@
 import { Directive, ElementRef, AfterViewInit } from "@angular/core";
+declare var $: any;
 
 @Directive({ selector: "[coreAccordionNav]" })
 

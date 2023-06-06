@@ -7,13 +7,14 @@ import { SharedModule } from "./shared/shared.module";
 import { LoginModule } from "./login/login.module";
 import { BASE_PATH, ApiModule, Configuration, UserService } from "./webapi";
 import { environment } from "src/environments/environment";
-import { LocalizationModule, LocaleValidationModule, L10nLoader } from "angular-l10n";
-import { CoreTranslationConfig, CoreTranslationService } from "./shared/core-localization.service";
+import { L10nTranslationModule, L10nLoader, L10nIntlModule } from "angular-l10n";
+import { CoreTranslationConfig, CoreTranslationService, HttpTranslationLoader } from "./shared/core-localization.service";
 import { SignUpModule } from "./sign-up/sign-up.module";
 import { ResetPasswordModule } from "./reset-password/reset-password.module";
 import { LoadingOverlayModule } from "./cloud-lib/loading-overlay/loading-overlay.module";
 import { UserDataService } from "./shared/user-data.service";
 import { HttpClientModule } from "@angular/common/http";
+import { FontAwesomeModule } from "@fortawesome/angular-fontawesome";
 
 @NgModule({
   declarations: [
@@ -34,17 +35,21 @@ import { HttpClientModule } from "@angular/common/http";
 
       return conf;
     }),
-    LocalizationModule.forRoot(CoreTranslationConfig),
-    LocaleValidationModule.forRoot(),
+    L10nTranslationModule.forRoot(CoreTranslationConfig, {
+      translationLoader: HttpTranslationLoader
+    }),
+    L10nIntlModule,
     SignUpModule,
     ResetPasswordModule,
     LoadingOverlayModule,
-    LoadingOverlayModule.forRoot()
-    ],
+    LoadingOverlayModule.forRoot(),
+    FontAwesomeModule,
+  ],
   providers: [
     { provide: BASE_PATH, useValue: environment.API_BASE_PATH },
     CoreTranslationService,
-    UserDataService
+    UserDataService,
+    HttpTranslationLoader
   ],
   bootstrap: [AppComponent]
 })

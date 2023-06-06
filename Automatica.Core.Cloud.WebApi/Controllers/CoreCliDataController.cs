@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    [Route("v{version:apiVersion}/coreCliData"), ApiVersion("1.0")]
+    [Route("webapi/v{version:apiVersion}/coreCliData"), ApiVersion("1.0")]
     [AllowAnonymous]
     [UserApiKeyAuthorization] // API Key must be at the last position!!
     [NeedsRole(UserRole.SystemAdministrator)]
@@ -46,10 +46,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
                 foreach(var other in others)
                 {
-                    using (var newDbContext = new CoreContext(Config))
-                    {
-                        await PluginsController.DeletePlugin(newDbContext, GetCloudBlobContainer(), other);
-                    }
+                    using var newDbContext = new CoreContext(Config);
+                    await PluginsController.DeletePlugin(newDbContext, GetCloudBlobContainer(), other);
                 }
             }
         }
@@ -133,15 +131,13 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [NeedsRole(UserRole.SystemAdministrator)]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion, string branch)
         {
-            using (var dbContext = new CoreContext(Config))
-            {
-                var versionObj = new Version(coreServerVersion);
-                var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
+            using var dbContext = new CoreContext(Config);
+            var versionObj = new Version(coreServerVersion);
+            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
 
-                return from r in versions
-                    group r by r.PluginGuid into g
-                    select g.OrderByDescending(x => x.VersionObj).First();
-            }
+            return from r in versions
+                group r by r.PluginGuid into g
+                select g.OrderByDescending(x => x.VersionObj).First();
         }
     }
 }

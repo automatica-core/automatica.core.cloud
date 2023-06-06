@@ -1,7 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { UserService } from "../webapi/";
 import { Router } from "@angular/router";
-import { Language } from "angular-l10n";
 import { UserDataService } from "../shared/user-data.service";
 
 @Component({
@@ -14,8 +13,6 @@ export class LoginComponent implements OnInit {
   public username: string;
   public password: string;
 
-  @Language() lang: string;
-
   constructor(private userService: UserService, private router: Router, private userDataService: UserDataService) { }
 
   ngOnInit() {
@@ -23,10 +20,10 @@ export class LoginComponent implements OnInit {
   }
 
   async submit() {
-    await this.login();
+    await this.login(void 0);
   }
 
-  async login() {
+  async login($event) {
     try {
       const ret = await this.userService.login("1", {
         username: this.username,

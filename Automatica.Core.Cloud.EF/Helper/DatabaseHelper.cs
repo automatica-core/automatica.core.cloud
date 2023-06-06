@@ -1,5 +1,5 @@
 ﻿using Automatica.Core.Cloud.EF.Models;
-using Microsoft.AspNetCore.Hosting;
+using Automatica.Core.Cloud.EF.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -9,21 +9,18 @@ namespace Automatica.Core.Cloud.EF.Helper
 {
     public static class DatabaseHelper
     {
-        public static IWebHost Migrate(this IWebHost webhost)
+        public static IServiceProvider Migrate(this IServiceProvider serviceProvider)
         {
-            using (var scope = webhost.Services.GetService<IServiceScopeFactory>().CreateScope())
+            using var scope = serviceProvider.GetService<IServiceScopeFactory>().CreateScope();
+            using var dbContext = scope.ServiceProvider.GetRequiredService<CoreContext>();
+            dbContext.Database.Migrate();
+            bool dbCreated = !dbContext.Users.Any();
+            if(dbCreated)
             {
-                using (var dbContext = scope.ServiceProvider.GetRequiredService<CoreContext>())
-                {
-                    dbContext.Database.Migrate();
-                    bool dbCreated = !dbContext.Users.Any();
-                    if(dbCreated)
-                    {
-                        OnAdd(dbContext);
-                    }
-                }
+                OnAdd(dbContext);
             }
-            return webhost;
+
+            return serviceProvider;
         }
 
         private static void OnAdd(CoreContext context)

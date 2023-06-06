@@ -1,5 +1,4 @@
 import { Component, OnInit } from "@angular/core";
-import { Language } from "angular-l10n";
 
 @Component({
   selector: "core-reset-password",
@@ -8,8 +7,6 @@ import { Language } from "angular-l10n";
 })
 export class ResetPasswordComponent implements OnInit {
 
-  @Language() lang: string;
-  
   constructor() { }
 
   ngOnInit() {

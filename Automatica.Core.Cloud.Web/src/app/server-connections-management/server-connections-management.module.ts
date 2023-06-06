@@ -3,7 +3,7 @@ import { CommonModule } from "@angular/common";
 import { ServerConnectionsManagementComponent } from "./server-connections-management.component";
 import { ServerConnectionsDetailComponent } from "./server-connections-detail/server-connections-detail.component";
 import { FormsModule } from "@angular/forms";
-import { TranslationModule } from "angular-l10n";
+import { L10nTranslationModule } from "angular-l10n";
 import { CloudLibModule } from "../cloud-lib/cloud-lib.module";
 import { MasterDetailModule } from "../cloud-lib/master-detail/master-detail.module";
 import { CloudFormModule } from "../cloud-lib/cloud-form/cloud-form.module";
@@ -18,7 +18,7 @@ import { CloudEditorModule } from "../cloud-lib/cloud-editor/cloud-editor.module
   imports: [
     FormsModule,
     CommonModule,
-    TranslationModule,
+    L10nTranslationModule,
     CloudLibModule,
     MasterDetailModule,
     CloudFormModule,

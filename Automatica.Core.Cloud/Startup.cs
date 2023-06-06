@@ -2,13 +2,11 @@ using Automatica.Core.Cloud.EF.Models;
 using Automatica.Core.Cloud.LicenseManager;
 using Automatica.Core.Cloud.WebApi.Authentication;
 using Automatica.Core.Cloud.WebApi.Controllers;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.AspNetCore.Mvc.Versioning;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -21,12 +19,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Automatica.Core.Model.Models.User;
+using Microsoft.OpenApi.Models;
 
 namespace Automatica.Core.Cloud
 {
     public class Startup
     {
-        private const string AutomaticaCorePrivat = "this-is-a-very-secret-code";
+        private const string AutomaticaCorePrivat = "this-is-a-very-secret-code-with-a-lot-of-chars";
 
         public Startup(IConfiguration configuration)
         {
@@ -39,7 +40,6 @@ namespace Automatica.Core.Cloud
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<CoreContext>();
-
 
             services.AddAuthentication(options =>
             {
@@ -58,19 +58,34 @@ namespace Automatica.Core.Cloud
                       ValidateAudience = false
                   };
               });
-
+            services.Configure<MvcOptions>(options =>
+            {
+            });
 
             services.AddMvcCore(config =>
-            {
-                config.Filters.Add(new AuthorizeFilter());
+                {
+                    config.Filters.Add(new AuthorizeFilter());
 
-            }).AddAuthorization(options =>
-            {
+                }).AddAuthorization(options =>
+                {
+                    options.AddPolicy(Role.AdminRole, policy => policy.RequireRole(Role.AdminRole));
+                    options.AddPolicy(Role.ViewerRole,
+                        policy => policy.RequireRole(Role.ViewerRole, Role.AdminRole, Role.VisuRole));
+                    options.AddPolicy(Role.VisuRole, policy => policy.RequireRole(Role.VisuRole));
 
-            }).AddApplicationPart(typeof(BaseController).GetTypeInfo().Assembly).AddControllersAsServices().AddJsonOptions(options => {
-                options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
-            }).AddJsonFormatters().AddXmlSerializerFormatters();
+                })
+                .AddApplicationPart(typeof(BaseController).GetTypeInfo().Assembly)
+                .AddControllersAsServices()
+                .AddApplicationPart(typeof(UserController).GetTypeInfo().Assembly)
+                .AddControllersAsServices()
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                    options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+                });
+
+
+            services.AddControllers();
 
             services.Configure<FormOptions>(x =>
             {
@@ -81,23 +96,17 @@ namespace Automatica.Core.Cloud
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "Automatica.Core.Cloud", Version = "v1" });
-                c.AddSecurityDefinition("Bearer", new Swashbuckle.AspNetCore.Swagger.ApiKeyScheme
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Automatica.Core.Cloud", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\", provide value: \"Bearer {token}\"",
                     Name = "Authorization",
-                    In = "header",
-                    Type = "apiKey"
+                    
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey
                 });
 
-                var security = new Dictionary<string, IEnumerable<string>>
-                  {
-                      {"Bearer", new string[] { }},
-                  };
-                c.AddSecurityRequirement(security);
             });
-
-            services.AddMvc();
             services.AddApiVersioning(o =>
                 {
                     o.AssumeDefaultVersionWhenUnspecified = true;
@@ -149,14 +158,16 @@ namespace Automatica.Core.Cloud
                 app.UseSwaggerUI(c =>
                 {
                     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Automatica.Core.Cloud");
-                    c.IndexStream = () => Assembly.GetExecutingAssembly().GetManifestResourceStream("Automatica.Core.Cloud.Swagger.swagger.index.html");
+                    c.IndexStream = () =>
+                        Assembly.GetExecutingAssembly()
+                            .GetManifestResourceStream("Automatica.Core.Cloud.Swagger.swagger.index.html");
                 });
-            
 
+            }
+            app.UseRouting();
 
-            
-                }
-
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.Use(async (context, next) =>
             {
@@ -170,13 +181,18 @@ namespace Automatica.Core.Cloud
                 }
             });
 
-            app.Map("/webapi", appBuilder =>
+            app.UseEndpoints(endpoints =>
             {
-                appBuilder.UseAuthentication();
-
-               // appBuilder.UseMiddleware<WebApiErrorMiddleware>();
-                appBuilder.UseMvc();
+                endpoints.MapControllerRoute("webapi", "");
             });
+
+            //app.Map("/webapi", appBuilder =>
+            //{
+            //    appBuilder.UseAuthentication();
+                
+            //   // appBuilder.UseMiddleware<WebApiErrorMiddleware>();
+            //    appBuilder.UseMvc();
+            //});
 
 
 

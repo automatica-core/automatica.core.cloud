@@ -1,5 +1,4 @@
 import { Component, OnInit } from "@angular/core";
-import { Language } from "angular-l10n";
 
 @Component({
   selector: "core-sign-up",
@@ -8,7 +7,6 @@ import { Language } from "angular-l10n";
 })
 export class SignUpComponent implements OnInit {
 
-  @Language() lang: string;
 
   constructor() { }
 

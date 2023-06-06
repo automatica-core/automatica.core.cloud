@@ -13,6 +13,12 @@ using SendGrid.Helpers.Mail;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
+
+    public class NgrokObject
+    {
+        public string TunnelUrl { get; set; }
+    }
+
     public class SayHelloData
     {
         public string Rid { get; set; }
@@ -27,7 +33,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public string Body { get; set; }
     }
 
-    [AllowAnonymous, Route("v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorization, ApiVersion("1.0")]
+    [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorization, ApiVersion("1.0")]
     public class CoreServerDataController : AzureStorageController
     {
 
@@ -50,23 +56,21 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 return;
             }
 
-            using (var dbContext = new CoreContext(Config))
+            using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+
+            if (server == null)
             {
-                var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-                if (server == null)
-                {
-                    throw new ArgumentException("Api key invalid");
-                }
-
-                server.LastKnownConnection = DateTime.Now;
-                server.Rid = sayHelloData.Rid;
-                server.ServerGuid = sayHelloData.ServerGuid;
-                server.Version = sayHelloData.Version;
-
-                dbContext.Update(server);
-                dbContext.SaveChanges();
+                throw new ArgumentException("Api key invalid");
             }
+
+            server.LastKnownConnection = DateTime.Now;
+            server.Rid = sayHelloData.Rid;
+            server.ServerGuid = sayHelloData.ServerGuid;
+            server.Version = sayHelloData.Version;
+
+            dbContext.Update(server);
+            dbContext.SaveChanges();
         }
 
         [HttpPost, Route("sendMail/{apiKey}")]
@@ -121,16 +125,15 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 return null;
             }
-            using (var dbContext = new CoreContext(Config))
-            {
-                var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
 
-                if (versions.Count > 0)
-                {
-                    return versions[0];
-                }
-                return null;
+            using var dbContext = new CoreContext(Config);
+            var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
+
+            if (versions.Count > 0)
+            {
+                return versions[0];
             }
+            return null;
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
@@ -141,25 +144,22 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 return null;
             }
-            using (var dbContext = new CoreContext(Config))
-            {
-                var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
-                return from r in versions
-                       group r by r.PluginGuid into g
-                       select g.OrderByDescending(x_ => x_.VersionObj).First();
-            }
+
+            using var dbContext = new CoreContext(Config);
+            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
+            return from r in versions
+                group r by r.PluginGuid into g
+                select g.OrderByDescending(x_ => x_.VersionObj).First();
         }
 
         [HttpGet, Route("ping/{apiKey}")]
         public string Ping(Guid apiKey)
         {
-            using (var dbContext = new CoreContext(Config))
+            using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+            if (server == null || server.VersionObj >= new Version(0, 6))
             {
-                var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-                if (server == null || server.VersionObj >= new Version(0, 6))
-                {
-                    return null;
-                }
+                return null;
             }
 
             return "{\"Response\": \"pong\"}";

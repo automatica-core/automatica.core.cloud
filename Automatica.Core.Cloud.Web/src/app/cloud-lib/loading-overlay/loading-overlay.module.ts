@@ -14,7 +14,7 @@ import { LoadingOverlayService } from "./loading-overlay.service";
   exports: [LoadingOverlayComponent]
 })
 export class LoadingOverlayModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<LoadingOverlayModule> {
     return {
       ngModule: LoadingOverlayModule,
       providers: [
@@ -23,7 +23,7 @@ export class LoadingOverlayModule {
     };
   }
 
-  static forChild(component: Type<any>): ModuleWithProviders {
+  static forChild(component: Type<any>): ModuleWithProviders<LoadingOverlayModule> {
     return {
       ngModule: LoadingOverlayModule
     };

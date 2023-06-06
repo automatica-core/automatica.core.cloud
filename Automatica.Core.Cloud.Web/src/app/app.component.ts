@@ -1,7 +1,8 @@
 import { Component, OnInit } from "@angular/core";
-import * as jQuery from "jquery";
-import { L10nLoader } from "angular-l10n";
 import { CoreTranslationService } from "./shared/core-localization.service";
+import { FaConfig, FaIconLibrary } from "@fortawesome/angular-fontawesome";
+import { faQuestion, fas } from "@fortawesome/free-solid-svg-icons";
+import { far } from "@fortawesome/free-regular-svg-icons";
 
 @Component({
   selector: "app-root",
@@ -12,11 +13,23 @@ export class AppComponent implements OnInit {
 
   title = "automatica-cloud";
 
-  constructor(private translateService: CoreTranslationService) {
+  constructor(private translateService: CoreTranslationService,
+    library: FaIconLibrary,
+    iconConfig: FaConfig) {
+      library.addIconPacks(fas);
+      library.addIconPacks(far);
 
+      
+    iconConfig.fallbackIcon = faQuestion;
   }
 
   async ngOnInit() {
-    await this.translateService.init();
+    console.log("yepppp");
+    try {
+      await this.translateService.init();
+    }
+    catch (e) {
+      console.log(e);
+    }
   }
 }

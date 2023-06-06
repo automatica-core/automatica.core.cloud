@@ -9,7 +9,7 @@ using System.Linq;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    [Route("v{version:apiVersion}/coreServer"), ApiVersion("1.0")]
+    [Route("webapi/v{version:apiVersion}/coreServer"), ApiVersion("1.0")]
     [UserExists]
     public class CoreServerController : AzureStorageController
     {

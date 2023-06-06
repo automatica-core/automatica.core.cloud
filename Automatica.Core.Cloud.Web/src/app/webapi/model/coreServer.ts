@@ -18,6 +18,8 @@ export interface CoreServer {
     serverGuid?: string;
     serverName?: string;
     lastKnownConnection?: Date;
+    lastKnownNgrokUrl?: string;
+    lastKnownNgrokUrlDate?: Date;
     version?: string;
     readonly versionObj?: Version;
     rid?: string;

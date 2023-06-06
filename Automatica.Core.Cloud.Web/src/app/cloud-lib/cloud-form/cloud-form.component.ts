@@ -1,7 +1,7 @@
-import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef } from "@angular/core";
-import { Language } from "angular-l10n";
+import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, inject } from "@angular/core";
 import { BaseFormService } from "src/app/base/base-form.service";
 import { LoadingOverlayService } from "../loading-overlay/loading-overlay.service";
+import { L10N_LOCALE } from "angular-l10n";
 
 
 @Component({
@@ -10,6 +10,9 @@ import { LoadingOverlayService } from "../loading-overlay/loading-overlay.servic
   styleUrls: ["./cloud-form.component.scss"]
 })
 export class CloudFormComponent implements OnInit {
+
+
+  locale = inject(L10N_LOCALE);
 
   @ContentChild(TemplateRef, { static: true })
   template: TemplateRef<any>;
@@ -31,7 +34,6 @@ export class CloudFormComponent implements OnInit {
     }
   }
 
-  @Language() lang: string;
 
   constructor(public baseFormService: BaseFormService<any>, public loadingService: LoadingOverlayService) { }
 

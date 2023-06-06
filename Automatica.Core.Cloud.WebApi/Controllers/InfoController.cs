@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    [Route("v{version:apiVersion}/info"), ApiVersion("1.0")]
+    [Route("webapi/v{version:apiVersion}/info"), ApiVersion("1.0")]
     public class InfoController : BaseController
     {
         [HttpGet, Route("")]

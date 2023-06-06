@@ -6,10 +6,10 @@
         <div style="height: 100%">
           <h2 class="article-title" translate>{{baseFormService.title}}</h2>
           <div class="mdl-card__actions mdl-card--border">
-            <dx-button style="margin-right: 2px" (click)="add($event)" icon="fa fa-plus"></dx-button>
-            <dx-button style="margin-right: 2px" (click)="delete($event)" icon="fa fa-minus"></dx-button>
-            <dx-button style="margin-right: 2px" (click)="refresh($event)" icon="fa fa-refresh"></dx-button>
-            <dx-button *ngIf="showUploadButton" style="margin-right: 2px" (click)="upload($event)" icon="fa fa-upload">
+            <dx-button style="margin-right: 2px" (click)="add()" icon="add"></dx-button>
+            <dx-button style="margin-right: 2px" (click)="delete()" icon="remove"></dx-button>
+            <dx-button style="margin-right: 2px" (click)="refresh($event)" icon="refresh"></dx-button>
+            <dx-button *ngIf="showUploadButton" style="margin-right: 2px" (click)="upload($event)" icon="upload">
             </dx-button>
           </div>
           <dx-data-grid #grid keyExpr="objId" id="gridContainer" [dataSource]="baseFormService.dataSource"

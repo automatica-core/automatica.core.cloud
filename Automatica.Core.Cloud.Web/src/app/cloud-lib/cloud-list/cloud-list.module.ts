@@ -2,14 +2,14 @@ import { NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { CloudListComponent } from "./cloud-list.component";
 import { DxDataGridModule, DxButtonModule } from "devextreme-angular";
-import { TranslationModule } from "angular-l10n";
+import { L10nTranslationModule } from "angular-l10n";
 import { LoadingOverlayModule } from "../loading-overlay/loading-overlay.module";
 
 @NgModule({
   imports: [
     CommonModule,
     DxDataGridModule,
-    TranslationModule,
+    L10nTranslationModule,
     DxButtonModule,
     LoadingOverlayModule
   ],

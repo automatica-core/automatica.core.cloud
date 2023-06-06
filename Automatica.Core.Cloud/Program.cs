@@ -1,11 +1,7 @@
 using System;
-using System.IO;
-using System.Reflection;
 using Automatica.Core.Cloud.EF.Helper;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Automatica.Core.Cloud
 {
@@ -17,7 +13,7 @@ namespace Automatica.Core.Cloud
             try
             {
                 var host = CreateWebHostBuilder(args).Build();
-                host.Migrate();
+                host.Services.Migrate();
 
                 host.Run();
 

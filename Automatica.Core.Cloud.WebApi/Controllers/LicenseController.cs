@@ -32,7 +32,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public IList<string> Features { get; set; }
     }
 
-    [Route("v{version:apiVersion}/license"), ApiVersion("1.0"), AllowAnonymous]
+    [Route("webapi/v{version:apiVersion}/license"), ApiVersion("1.0"), AllowAnonymous]
     public class LicenseController : BaseController
     {
         public LicenseController(CoreContext context, ILicenseManager licenseManager)

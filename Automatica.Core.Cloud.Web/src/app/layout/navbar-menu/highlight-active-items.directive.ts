@@ -1,6 +1,7 @@
 import { Directive, ElementRef, AfterViewInit } from "@angular/core";
 import { Location } from "@angular/common";
 import { Router, NavigationEnd } from "@angular/router";
+declare var $: any;
 
 @Directive({ selector: "[coreHighlightActiveItems]" })
 

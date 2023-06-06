@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { TranslationService } from "angular-l10n";
+import { L10nTranslationService } from "angular-l10n";
 
 @Injectable()
 export class LoadingOverlayService {
@@ -7,7 +7,7 @@ export class LoadingOverlayService {
   title: string = "";
   popupVisible: boolean = false;
 
-  constructor(private translate: TranslationService) { }
+  constructor(private translate: L10nTranslationService) { }
 
   showLoadingPanel(title: string) {
     this.title = this.translate.translate(title);

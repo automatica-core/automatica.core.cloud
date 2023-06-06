@@ -7,6 +7,8 @@ import { Component, OnInit } from "@angular/core";
 })
 export class ServerConnectionsDetailComponent implements OnInit {
 
+  loading = false;
+  
   constructor() { }
 
   ngOnInit() {

@@ -14,7 +14,7 @@ using SendGrid.Helpers.Mail;
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
 
-    [AllowAnonymous, Route("v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
+    [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
     public class CoreServerDataControllerV2 : AzureStorageController
     {
 
@@ -31,22 +31,40 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpPost, Route("sayHello/{apiKey}/{serverGuid}")]
         public void SayHello([FromBody]SayHelloData sayHelloData, Guid apiKey)
         {
-            using (var dbContext = new CoreContext(Config))
+            using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+
+            if (server == null)
             {
-                var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-                if (server == null)
-                {
-                    throw new ArgumentException("Api key invalid");
-                }
-
-                server.LastKnownConnection = DateTime.Now;
-                server.Rid = sayHelloData.Rid;
-                server.Version = sayHelloData.Version;
-
-                dbContext.Update(server);
-                dbContext.SaveChanges();
+                throw new ArgumentException("Api key invalid");
             }
+
+            server.LastKnownConnection = DateTime.Now;
+            server.Rid = sayHelloData.Rid;
+            server.Version = sayHelloData.Version;
+
+            dbContext.Update(server);
+            dbContext.SaveChanges();
+        }
+
+
+
+        [HttpPost, Route("ngrok/{apiKey}/{serverGuid}")]
+        public void Ngrok([FromBody] NgrokObject ngrokObject, Guid apiKey)
+        {
+            using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+
+            if (server == null)
+            {
+                throw new ArgumentException("Api key invalid");
+            }
+
+            server.LastKnownNgrokUrlDate = DateTime.Now;
+            server.LastKnownNgrokUrl = ngrokObject.TunnelUrl;
+
+            dbContext.Update(server);
+            dbContext.SaveChanges();
         }
 
         [HttpPost, Route("sendMail/{apiKey}/{serverGuid}")]
@@ -87,31 +105,27 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
         public ServerVersion CheckForUpdates(string rid, string coreServerVersion, string branch)
         {
-            using (var dbContext = new CoreContext(Config))
-            {
-                var versionObj = new Version(coreServerVersion);
-                var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
+            using var dbContext = new CoreContext(Config);
+            var versionObj = new Version(coreServerVersion);
+            var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
 
-                if (versions.Count > 0)
-                {
-                    return versions[0];
-                }
-                return null;
+            if (versions.Count > 0)
+            {
+                return versions[0];
             }
+            return null;
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion, string branch)
         {
-            using (var dbContext = new CoreContext(Config))
-            {
-                var versionObj = new Version(coreServerVersion);
-                var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
+            using var dbContext = new CoreContext(Config);
+            var versionObj = new Version(coreServerVersion);
+            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
 
-                return from r in versions
-                    group r by r.PluginGuid into g
-                    select g.OrderByDescending(x => x.VersionObj).First();
-            }
+            return from r in versions
+                group r by r.PluginGuid into g
+                select g.OrderByDescending(x => x.VersionObj).First();
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}/{serverGuid}")]
