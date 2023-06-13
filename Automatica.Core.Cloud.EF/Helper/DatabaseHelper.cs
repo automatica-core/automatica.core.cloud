@@ -48,6 +48,8 @@ namespace Automatica.Core.Cloud.EF.Helper
             };
 
             context.Add(licenseKey);
+
+           
             context.Add(saUser);
             context.SaveChanges();
         }

@@ -41,7 +41,8 @@
             "MAX_DATAPOINTS": "Max datapoints",
             "MAX_USERS": "Max users",
             "KEY": "License",
-            "FEATURES": "Features"
+            "FEATURES": "Features",
+            "ALLOW_REMOTE_CONTROL": "Allow Remote Access/Control"
         },
         "PLUGINS": {
             "TITLE": "Plugins",

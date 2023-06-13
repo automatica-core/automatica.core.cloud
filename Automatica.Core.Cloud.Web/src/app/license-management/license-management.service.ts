@@ -37,13 +37,15 @@ export class LicenseManagementService extends BaseFormService<License> {
             maxDatapoints: object.maxDatapoints,
             maxUsers: object.maxUsers,
             this2CoreServer: object.this2CoreServerNavigation.objId,
-            features: object.features
+            features: object.features,
+            allowRemoteControl: object.allowRemoteControl
         };
 
         return super.call<License>(() => this.licenseService.generateLicense("1", this.userDataService.user.apiKey, generateData, "response").toPromise());
     }
     async getAll(): Promise<License[]> {
-        this.features = await super.call<PluginFeature[]>(() => this.licenseService.getAllPluginFeatures("1", "response").toPromise());
+        var features = await super.call<PluginFeature[]>(() => this.licenseService.getAllPluginFeatures("1", "response").toPromise());
+        this.features = features;
 
         return super.call<License[]>(() => this.licenseService.getLicenses("1", "response").toPromise());
     }

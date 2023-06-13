@@ -29,6 +29,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
         public Guid This2CoreServer { get; set; }
 
+        public bool AllowRemoteControl { get; set; }
         public IList<string> Features { get; set; }
     }
 
@@ -73,7 +74,14 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpGet, Route("features"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
         public List<PluginFeature> GetAllPluginFeatures()
         {
-            return Context.PluginFeatures.ToList();
+            var pluginFeatures = Context.PluginFeatures.Distinct().ToList();
+
+           var distinctFeatures = pluginFeatures
+                .GroupBy(p => p.FeatureName)
+                .Select(g => g.First())
+                .ToList();
+
+           return distinctFeatures;
         }
 
         [HttpDelete, Route("{objId}"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
@@ -104,12 +112,13 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
             dbLicense.This2CoreServer = generateLicenseData.This2CoreServer;
             dbLicense.This2VersionKey = key.ObjId;
-            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, generateLicenseData.MaxUsers, generateLicenseData.This2CoreServer, generateLicenseData.Expires, generateLicenseData.LicensedTo, generateLicenseData.Email, generateLicenseData.Features); 
+            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, generateLicenseData.MaxUsers, generateLicenseData.This2CoreServer, generateLicenseData.Expires, generateLicenseData.LicensedTo, generateLicenseData.Email, generateLicenseData.AllowRemoteControl, generateLicenseData.Features); 
             dbLicense.MaxDatapoints = generateLicenseData.MaxDatapoints;
             dbLicense.MaxUsers = generateLicenseData.MaxUsers;
             dbLicense.LicensedTo = generateLicenseData.LicensedTo;
             dbLicense.Email = generateLicenseData.LicensedTo;
             dbLicense.FeaturesString = string.Join(",", generateLicenseData.Features);
+            dbLicense.AllowRemoteControl = generateLicenseData.AllowRemoteControl;
 
             if (isNew)
             {

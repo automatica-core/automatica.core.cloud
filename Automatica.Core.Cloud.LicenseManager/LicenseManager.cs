@@ -49,23 +49,23 @@ namespace Automatica.Core.Cloud.LicenseManager
 
         }
 
-        public string CreateLicense(int maxDatapoints, int maxUsers, Guid this2CoreServer, DateTime expires, string licensedTo, string email, IList<string> features)
+        public string CreateLicense(int maxDatapoints, int maxUsers, Guid this2CoreServer, DateTime expires, string licensedTo, string email, bool allowRemoteControl, IList<string> features)
         {
-            return Create(LicenseType.Standard, maxDatapoints, maxUsers, this2CoreServer, expires, licensedTo, email, features);
+            return Create(LicenseType.Standard, maxDatapoints, maxUsers, this2CoreServer, expires, licensedTo, email, allowRemoteControl, features);
         }
 
         public string CreateTrialLicense(int maxDatapoints, int maxUsers, Guid this2CoreServer, DateTime expires, string licensedTo, string email)
         {
-            return Create(LicenseType.Trial, maxDatapoints, maxUsers, this2CoreServer, expires, licensedTo, email, new List<string>());
+            return Create(LicenseType.Trial, maxDatapoints, maxUsers, this2CoreServer, expires, licensedTo, email, false, new List<string>());
         }
 
-        private string Create(LicenseType type, int maxDatapoints, int maxUsers, Guid this2CoreServer, DateTime expires, string licensedTo, string email, IList<string> features)
+        private string Create(LicenseType type, int maxDatapoints, int maxUsers, Guid this2CoreServer, DateTime expires, string licensedTo, string email, bool allowRemoteControl, IList<string> features)
         {
             var coreServer = CoreContext.CoreServers.Single(a => a.ObjId == this2CoreServer);
-            return Create(type, maxDatapoints, maxUsers, coreServer.VersionObj, expires, licensedTo, email, features);
+            return Create(type, maxDatapoints, maxUsers, coreServer.VersionObj, coreServer.ServerGuid, expires, licensedTo, email, allowRemoteControl, features);
         }
 
-        private string Create(LicenseType type, int maxDatapoints, int maxUsers, System.Version version, DateTime expires, string licensedTo, string email, IList<string> features)
+        private string Create(LicenseType type, int maxDatapoints, int maxUsers, System.Version version, Guid licenseId, DateTime expires, string licensedTo, string email, bool allowRemoteControl, IList<string> features)
         {
             var key = CoreContext.LicenseKeys.SingleOrDefault(a => a.Version == version.Major);
 
@@ -76,14 +76,15 @@ namespace Automatica.Core.Cloud.LicenseManager
 
 
             var license = Standard.Licensing.License.New()
-                .WithUniqueIdentifier(Guid.NewGuid())
+                .WithUniqueIdentifier(licenseId)
                 .As(type)
                 .ExpiresAt(expires)
                 .WithMaximumUtilization(1)
                 .WithProductFeatures(new Dictionary<string, string>
                 {
                     {"MaxDatapoints", maxDatapoints.ToString()},
-                    {"MaxUsers", maxUsers.ToString()}
+                    {"MaxUsers", maxUsers.ToString()},
+                    {"AllowRemoteControl", allowRemoteControl.ToString()}
                 })
                 .LicensedTo(licensedTo, email);
 
@@ -96,7 +97,7 @@ namespace Automatica.Core.Cloud.LicenseManager
 
         public string CreateDemoLicense()
         {
-            return Create(LicenseType.Trial, 100, 1, new System.Version(0, 0), new DateTime(2030, 12, 31), "Anybody", "nobody@nobody.nobody", new List<string>());
+            return Create(LicenseType.Trial, 100, 1, new System.Version(0, 0), Guid.NewGuid(),new DateTime(2030, 12, 31), "Anybody", "nobody@nobody.nobody", false, new List<string>());
         }
     }
 }

@@ -12,8 +12,8 @@ namespace Automatica.Core.Cloud.EF.Models
         public string ServerName { get; set; }
 
         public DateTime? LastKnownConnection { get; set; }
-        public string LastKnownNgrokUrl { get; set; }
-        public DateTime? LastKnownNgrokUrlDate { get; set; }
+        public string LastKnownRemoteConnectUrl { get; set; }
+        public DateTime? LastKnownRemoteConnectUrlDate { get; set; }
 
         public string Version { get; set; }
 

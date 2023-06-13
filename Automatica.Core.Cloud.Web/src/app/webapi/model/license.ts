@@ -26,6 +26,7 @@ export interface License {
     this2VersionKeyNavigation?: LicenseKey;
     featuresString?: string;
     isNewObject?: boolean;
+    allowRemoteControl?: boolean;
 
     features: string[];
 }

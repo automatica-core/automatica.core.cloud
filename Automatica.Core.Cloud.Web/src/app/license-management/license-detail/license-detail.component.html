@@ -1,4 +1,4 @@
-<core-cloud-form #cloudForm [name]="'serverVersionForm'" [loading]="loading">
+<core-cloud-form #cloudForm [name]="'serverVersionForm'" [loading]="loading" [readOnlyIfNotNew]="true">
   <ng-template #template let-item>
 
     <core-cloud-editor [title]="'COMMON.SERVERS.SERVER'">
@@ -7,28 +7,32 @@
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSED_TO'">
-      <dx-text-box valueChangeEvent="keyup" [(value)]="item.licensedTo"></dx-text-box>
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.licensedTo" [readOnly]="!item.isNewObject"></dx-text-box>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.EMAIL'">
-      <dx-text-box valueChangeEvent="keyup" [(value)]="item.email"></dx-text-box>
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.email" [readOnly]="!item.isNewObject"></dx-text-box>
     </core-cloud-editor>
 
 
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_DATAPOINTS'">
-      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxDatapoints"></dx-number-box>
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxDatapoints" [readOnly]="!item.isNewObject"></dx-number-box>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_USERS'">
-      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxUsers"></dx-number-box>
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxUsers" [readOnly]="!item.isNewObject"></dx-number-box>
     </core-cloud-editor>
 
-    <core-cloud-editor [title]="'COMMON.LICENSE.KEY'">
+    <core-cloud-editor [title]="'COMMON.LICENSE.ALLOW_REMOTE_CONTROL'">
+      <dx-check-box [(value)]="item.allowRemoteControl" [readOnly]="!item.isNewObject"></dx-check-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.KEY'" *ngIf="!item.isNewObject">
       <dx-text-area [readOnly]="true" valueChangeEvent="keyup" [(value)]="item.licenseKey" [height]="400"></dx-text-area>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.FEATURES'">
-      <dx-data-grid [dataSource]="licenseService.features" keyExpr="featureName" [(selectedRowKeys)]="selectedFeatures">
+      <dx-data-grid [dataSource]="licenseService.features" keyExpr="featureName" [(selectedRowKeys)]="selectedFeatures" [readOnly]="!item.isNewObject">
         <dxo-selection mode="multiple"></dxo-selection>
         <dxi-column dataField="featureName" caption="Name"></dxi-column>
       </dx-data-grid>

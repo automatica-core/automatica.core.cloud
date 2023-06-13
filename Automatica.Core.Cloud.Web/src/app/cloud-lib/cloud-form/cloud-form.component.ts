@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, inject } from "@angular/core";
+import { Component, OnInit, Input, Output, EventEmitter, ContentChild, TemplateRef, inject, OnDestroy } from "@angular/core";
 import { BaseFormService } from "src/app/base/base-form.service";
 import { LoadingOverlayService } from "../loading-overlay/loading-overlay.service";
 import { L10N_LOCALE } from "angular-l10n";
@@ -9,7 +9,7 @@ import { L10N_LOCALE } from "angular-l10n";
   templateUrl: "./cloud-form.component.html",
   styleUrls: ["./cloud-form.component.scss"]
 })
-export class CloudFormComponent implements OnInit {
+export class CloudFormComponent implements OnInit, OnDestroy {
 
 
   locale = inject(L10N_LOCALE);
@@ -21,6 +21,7 @@ export class CloudFormComponent implements OnInit {
   name: string;
 
   private _loading: boolean;
+  sub: any;
   @Input()
   public get loading(): boolean {
     return this._loading;
@@ -34,10 +35,24 @@ export class CloudFormComponent implements OnInit {
     }
   }
 
+  @Input() readOnlyIfNotNew: boolean = false;
+
+  readOnly = false;
+  disabled = false;
+
 
   constructor(public baseFormService: BaseFormService<any>, public loadingService: LoadingOverlayService) { }
-
+ 
   ngOnInit() {
+   this.sub =  this.baseFormService.selectedItemChange.subscribe((value) => {
+      if (this.readOnlyIfNotNew) {
+        this.readOnly = !this.baseFormService.selectedItem.isNewObject;
+        this.disabled = !this.baseFormService.selectedItem.isNewObject;
+      }
+    });
+  }
+  ngOnDestroy(): void {
+   this.sub.unsubscribe();
   }
 
 

@@ -4,6 +4,7 @@ using Automatica.Core.Cloud.EF.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Automatica.Core.Cloud.EF.Migrations
 {
     [DbContext(typeof(CoreContext))]
-    partial class CoreContextModelSnapshot : ModelSnapshot
+    [Migration("20230613180509_AddNewCoreFeatureInLicenses")]
+    partial class AddNewCoreFeatureInLicenses
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,10 +38,10 @@ namespace Automatica.Core.Cloud.EF.Migrations
                     b.Property<DateTime?>("LastKnownConnection")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("LastKnownRemoteConnectUrl")
+                    b.Property<string>("LastKnownNgrokUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("LastKnownRemoteConnectUrlDate")
+                    b.Property<DateTime?>("LastKnownNgrokUrlDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Rid")

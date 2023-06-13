@@ -133,7 +133,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         {
             using var dbContext = new CoreContext(Config);
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
+            var versions = dbContext.Plugins.Where(a => a.Branch == branch).ToList().Where(a => versionObj >= a.MinCoreServerVersionObj);
 
             return from r in versions
                 group r by r.PluginGuid into g

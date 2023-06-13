@@ -16,9 +16,11 @@
                     <div class="dx-field-label"></div>
                     <div class="dx-field-value">
                       <dx-button style="margin-right: 2px" (click)="saveClick($event)"
-                        text="{{ 'COMMON.SAVE' | translate:locale.language  }}"></dx-button>
+                        text="{{ 'COMMON.SAVE' | translate:locale.language  }}"
+                        [disabled]="disabled"></dx-button>
                       <dx-button *ngIf="baseFormService.selectedItem.isNewObject" (click)="abort($event)"
-                        text="{{ 'COMMON.ABORT' | translate:locale.language  }}"></dx-button>
+                        text="{{ 'COMMON.ABORT' | translate:locale.language  }}"
+                        [disabled]="disabled"></dx-button>
                     </div>
                   </div>
                 </div>

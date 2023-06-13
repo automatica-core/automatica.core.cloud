@@ -10,6 +10,8 @@ using System.Net;
 using System.Threading.Tasks;
 using SendGrid;
 using SendGrid.Helpers.Mail;
+using Microsoft.EntityFrameworkCore;
+using ServerVersion = Automatica.Core.Cloud.EF.Models.ServerVersion;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -17,15 +19,39 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
     public class CoreServerDataControllerV2 : AzureStorageController
     {
+        private readonly CoreContext _context;
 
-        public CoreServerDataControllerV2(IConfiguration config) : base(config)
+        public CoreServerDataControllerV2(IConfiguration config, CoreContext context) : base(config)
         {
+            _context = context;
         }
 
         [HttpGet, Route("checkLicense/{apiKey}/{serverGuid}")]
         public string CheckLicense()
         {
             return "INVALID LICENSE";
+        }
+
+
+
+        [HttpGet, Route("license/{apiKey}/{serverGuid}"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
+        public string GetLicenseForServer(Guid apiKey)
+        {
+            var server = _context.CoreServers.Single(a => a.ApiKey == apiKey);
+
+            if (server == null)
+            {
+                throw new ArgumentException("Api key invalid");
+            }
+
+            var license = _context.Licenses.Single(a => a.This2CoreServer == server.ObjId);
+
+            if (license == null)
+            {
+                throw new ArgumentException("No License available!");
+            }
+
+            return license.LicenseKey;
         }
 
         [HttpPost, Route("sayHello/{apiKey}/{serverGuid}")]
@@ -49,8 +75,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
 
 
-        [HttpPost, Route("ngrok/{apiKey}/{serverGuid}")]
-        public void Ngrok([FromBody] NgrokObject ngrokObject, Guid apiKey)
+        [HttpPost, Route("remoteConnect/{apiKey}/{serverGuid}")]
+        public void SetRemoteConnectUrl([FromBody] NgrokObject ngrokObject, Guid apiKey)
         {
             using var dbContext = new CoreContext(Config);
             var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
@@ -60,8 +86,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 throw new ArgumentException("Api key invalid");
             }
 
-            server.LastKnownNgrokUrlDate = DateTime.Now;
-            server.LastKnownNgrokUrl = ngrokObject.TunnelUrl;
+            server.LastKnownRemoteConnectUrlDate = DateTime.Now;
+            server.LastKnownRemoteConnectUrl = ngrokObject.TunnelUrl;
 
             dbContext.Update(server);
             dbContext.SaveChanges();

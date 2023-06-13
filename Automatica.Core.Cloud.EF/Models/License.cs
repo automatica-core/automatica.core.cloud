@@ -18,6 +18,8 @@ namespace Automatica.Core.Cloud.EF.Models
         public string LicensedTo { get; set; }
         public string Email { get; set; }
 
+        public bool AllowRemoteControl { get; set; }
+
         public CoreServer This2CoreServerNavigation { get; set; }
 
         public LicenseKey This2VersionKeyNavigation { get; set; }

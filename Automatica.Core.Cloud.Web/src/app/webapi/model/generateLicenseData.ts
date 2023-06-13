@@ -19,5 +19,6 @@ export interface GenerateLicenseData {
     licensedTo?: string;
     email?: string;
     this2CoreServer?: string;
+    allowRemoteControl?: boolean;
     features?: Array<string>;
 }
