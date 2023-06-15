@@ -7,5 +7,6 @@
 
         public string DnsZoneName { get; set; }
         public string CNameTarget { get; set; }
+        public string CNamePrefix { get; set; }
     }
 }

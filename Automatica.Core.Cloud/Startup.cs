@@ -121,7 +121,8 @@ namespace Automatica.Core.Cloud
             {
                 a.DnsZoneName = "automaticaremote.com";
                 a.ResourceGroup = "automatica";
-                a.CNameTarget = "remote.automaticaremote.com";
+                a.CNameTarget = "dev.automaticaremote.com";
+                a.CNamePrefix = "dev";
             });
 
         }

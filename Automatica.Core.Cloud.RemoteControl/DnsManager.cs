@@ -90,6 +90,11 @@ namespace Automatica.Core.Cloud.RemoteControl
                 Metadata = { {"ServerId", $"{serverId}"} }
             };
 
+            if (!String.IsNullOrEmpty(_config.CurrentValue.CNamePrefix))
+            {
+                name = $"{name}.{_config.CurrentValue.CNamePrefix}";
+            }
+
             await all.CreateOrUpdateAsync(WaitUntil.Completed, name, dnsCnameRecord, cancellationToken: cancellationToken);
             return $"{name}.{_config.CurrentValue.DnsZoneName}";
         }
