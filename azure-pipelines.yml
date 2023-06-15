@@ -37,7 +37,7 @@ stages:
       displayName: Login to docker
       inputs:
         command: login
-        containerRegistry: dockerRegistryServiceConnection
+        containerRegistry: DockerHub
     - task: Docker@2
       inputs:
         repository: automaticacore/frps
