@@ -62,7 +62,9 @@ variable "environment" {
 variable "environment_tag" {
 }
 
-
+variable "container_memory" {
+    default = "1.5"
+}
 
 variable "frps_tag" {
   
