@@ -25,8 +25,8 @@ stages:
   dependsOn: 
 
   jobs:
-  - job: DockerBuild
-    displayName: DockerBuild
+  - job: BuildFrpsDocker
+    displayName: Build frps image
     pool:
       vmImage: $(vmImageName)
     
