@@ -48,7 +48,7 @@ stages:
         
 - stage: PackageTerraform
   displayName: Pack terraform
-  dependsOn: DockerBuild
+  dependsOn: BuildFrpsDocker
 
   jobs:
   - job: Pack
