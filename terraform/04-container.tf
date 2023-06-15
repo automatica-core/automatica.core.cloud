@@ -52,7 +52,3 @@ resource "azurerm_dns_a_record" "frps_a" {
   ttl                 = 300
   records             = [data.azurerm_container_group.frps.ip_address]
 }
-
-output "ip_address" {
-  value = data.azurerm_container_group.example.ip_address
-}
