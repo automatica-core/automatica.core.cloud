@@ -46,7 +46,6 @@ stages:
         command: 'buildAndPush'
         Dockerfile: 'docker/frps/Dockerfile'
         tags: '$(Build.BuildNumber)'
-        buildContext: "$(Build.SourcesDirectory)"
         
 - stage: PackageTerraform
   displayName: Pack terraform
