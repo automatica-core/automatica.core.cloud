@@ -79,3 +79,11 @@ variable "frp_dashboard_password" {
 variable "frp_subdomain" {
   
 }
+
+
+variable "dns_ressource_group" {
+  
+}
+variable "dns_zone_name" {
+  
+}

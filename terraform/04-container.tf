@@ -44,3 +44,15 @@ resource "azurerm_container_group" "frps" {
   }
 
 }
+
+resource "azurerm_dns_a_record" "frps_a" {
+  name                = var.environment == "prod" ? "@" : "${var.environment}"
+  zone_name           = var.dns_zone_name
+  resource_group_name = var.dns_ressource_group
+  ttl                 = 300
+  records             = [data.azurerm_container_group.frps.ip_address]
+}
+
+output "ip_address" {
+  value = data.azurerm_container_group.example.ip_address
+}
