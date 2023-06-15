@@ -35,6 +35,7 @@ stages:
       submodules: true
     - task: Docker@2
       displayName: Login to docker
+      buildContext: docker/frps
       inputs:
         command: login
         containerRegistry: DockerHub
