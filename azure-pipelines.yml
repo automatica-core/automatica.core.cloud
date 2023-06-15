@@ -35,13 +35,13 @@ stages:
       submodules: true
     - task: Docker@2
       displayName: Login to docker
-      buildContext: docker/frps
       inputs:
         command: login
         containerRegistry: DockerHub
     - task: Docker@2
       inputs:
         repository: automaticacore/frps
+        buildContext: docker/frps
         command: 'buildAndPush'
         Dockerfile: 'docker/frps/Dockerfile'
         tags: '$(Build.BuildNumber)'
