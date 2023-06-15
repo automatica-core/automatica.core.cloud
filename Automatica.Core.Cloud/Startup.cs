@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using Automatica.Core.Cloud.RemoteControl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Automatica.Core.Model.Models.User;
 using Microsoft.OpenApi.Models;
@@ -116,6 +117,13 @@ namespace Automatica.Core.Cloud
             services.AddSingleton(new JwtInfoProvider(AutomaticaCorePrivat));
             services.AddScoped<ILicenseManager, LicenseManager.LicenseManager>();
 
+            services.AddDnsZoneProvider(a =>
+            {
+                a.DnsZoneName = "automaticaremote.com";
+                a.ResourceGroup = "automatica";
+                a.CNameTarget = "remote.automaticaremote.com";
+            });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -149,21 +157,20 @@ namespace Automatica.Core.Cloud
                 wwwrootPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot");
             }
 
-            if (env.IsDevelopment())
+          
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
             {
-                app.UseSwagger();
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Automatica.Core.Cloud");
+                c.IndexStream = () =>
+                    Assembly.GetExecutingAssembly()
+                        .GetManifestResourceStream("Automatica.Core.Cloud.Swagger.swagger.index.html");
+            });
 
-                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
-                // specifying the Swagger JSON endpoint.
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Automatica.Core.Cloud");
-                    c.IndexStream = () =>
-                        Assembly.GetExecutingAssembly()
-                            .GetManifestResourceStream("Automatica.Core.Cloud.Swagger.swagger.index.html");
-                });
-
-            }
+        
             app.UseRouting();
 
             app.UseAuthentication();

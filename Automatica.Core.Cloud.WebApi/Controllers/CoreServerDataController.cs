@@ -13,8 +13,11 @@ using SendGrid.Helpers.Mail;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-
-    public class NgrokObject
+    public class CreateRemoteConnectObject
+    {
+        public string TargetSubDomain { get; set; }
+    }
+    public class RemoteConnectObject
     {
         public string TunnelUrl { get; set; }
     }

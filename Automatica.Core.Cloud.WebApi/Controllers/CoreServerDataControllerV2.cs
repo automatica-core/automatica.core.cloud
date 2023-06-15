@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Automatica.Core.Cloud.RemoteControl;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using Microsoft.EntityFrameworkCore;
@@ -20,10 +21,12 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     public class CoreServerDataControllerV2 : AzureStorageController
     {
         private readonly CoreContext _context;
+        private readonly IDnsManager _dnsManager;
 
-        public CoreServerDataControllerV2(IConfiguration config, CoreContext context) : base(config)
+        public CoreServerDataControllerV2(IConfiguration config, CoreContext context, IDnsManager dnsManager) : base(config)
         {
             _context = context;
+            _dnsManager = dnsManager;
         }
 
         [HttpGet, Route("checkLicense/{apiKey}/{serverGuid}")]
@@ -74,11 +77,46 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
 
+        [HttpPost, Route("createRemoteConnect/{apiKey}/{serverGuid}")]
+        public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid apiKey)
+        {
+            await using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+
+            if (server == null)
+            {
+                throw new ArgumentException("Api key invalid");
+            }
+
+            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
+
+            if (license is not { AllowRemoteControl: true })
+            {
+                throw new ArgumentException("No license or invalid license found!");
+            }
+
+            var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
+
+            if (!isDnsAvailable)
+            {
+                throw new ArgumentException("DNS Name is not available!");
+            }
+
+            var targetUrl = await _dnsManager.CreateDnsNameAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
+            var remoteConnectUrl = new RemoteConnectObject
+            {
+                TunnelUrl = targetUrl
+            };
+            await SetRemoteConnectUrl(remoteConnectUrl, apiKey);
+
+            return remoteConnectUrl;
+        }
+
 
         [HttpPost, Route("remoteConnect/{apiKey}/{serverGuid}")]
-        public void SetRemoteConnectUrl([FromBody] NgrokObject ngrokObject, Guid apiKey)
+        public async Task<RemoteConnectObject> SetRemoteConnectUrl([FromBody] RemoteConnectObject remoteConnectObj, Guid apiKey)
         {
-            using var dbContext = new CoreContext(Config);
+            await using var dbContext = new CoreContext(Config);
             var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
 
             if (server == null)
@@ -87,10 +125,11 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             }
 
             server.LastKnownRemoteConnectUrlDate = DateTime.Now;
-            server.LastKnownRemoteConnectUrl = ngrokObject.TunnelUrl;
+            server.LastKnownRemoteConnectUrl = remoteConnectObj.TunnelUrl;
 
             dbContext.Update(server);
-            dbContext.SaveChanges();
+            await dbContext.SaveChangesAsync();
+            return remoteConnectObj;
         }
 
         [HttpPost, Route("sendMail/{apiKey}/{serverGuid}")]

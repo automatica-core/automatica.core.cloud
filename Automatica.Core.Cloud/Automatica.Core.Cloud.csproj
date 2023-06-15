@@ -18,7 +18,7 @@
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="7.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.AzureAppServicesIntegration" Version="7.0.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.5"/>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.5.0" />
@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj" />
+    <ProjectReference Include="..\Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.WebApi\Automatica.Core.Cloud.WebApi.csproj" />
   </ItemGroup>
 
