@@ -45,6 +45,12 @@ resource "azurerm_container_group" "frps" {
 
 }
 
+data "azurerm_container_group" "frps" {
+  name                = "${var.environment}-${var.prefix}-frps"
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+
 resource "azurerm_dns_a_record" "frps_a" {
   name                = var.environment == "prod" ? "@" : "${var.environment}"
   zone_name           = var.dns_zone_name
