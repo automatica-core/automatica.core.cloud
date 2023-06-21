@@ -56,17 +56,91 @@ resource "azurerm_container_group" "frps" {
       for_each = local.ports1
       content  {
         port   = ports.port
-        https_port  = "TCP"
+        protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports1
       content  {
         port   = ports.port
-        https_port  = "UDP"
+        protocol  = "UDP"
       }
     } 
 
+    dynamic "ports" {
+      for_each = local.ports2
+      content  {
+        port   = ports.port
+        protocol  = "TCP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports2
+      content  {
+        port   = ports.port
+        protocol  = "UDP"
+      }
+    } 
+
+    dynamic "ports" {
+      for_each = local.ports2
+      content  {
+        port   = ports.port
+        protocol  = "TCP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports2
+      content  {
+        port   = ports.port
+        protocol  = "UDP"
+      }
+    } 
+
+    dynamic "ports" {
+      for_each = local.ports3
+      content  {
+        port   = ports.port
+        protocol  = "TCP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports3
+      content  {
+        port   = ports.port
+        protocol  = "UDP"
+      }
+    } 
+    
+    dynamic "ports" {
+      for_each = local.ports4
+      content  {
+        port   = ports.port
+        protocol  = "TCP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports4
+      content  {
+        port   = ports.port
+        protocol  = "UDP"
+      }
+    } 
+
+    dynamic "ports" {
+      for_each = local.ports4
+      content  {
+        port   = ports.port
+        protocol  = "TCP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports4
+      content  {
+        port   = ports.port
+        protocol  = "UDP"
+      }
+    } 
     environment_variables = {
    
       DASHBOARD_USER = var.frp_dashboard_user
