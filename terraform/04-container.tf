@@ -35,6 +35,18 @@ resource "azurerm_container_group" "frps" {
       protocol = "UDP"
     }
 
+    dynamic "ports" {
+      for_each = var.ports
+      ports {
+        port   = ports.value
+        https_port  = "TCP"
+      }
+      ports {
+        port   = ports.value
+        https_port  = "UDP"
+      }
+    } 
+
     environment_variables = {
    
       DASHBOARD_USER = var.frp_dashboard_user

@@ -87,3 +87,6 @@ variable "dns_ressource_group" {
 variable "dns_zone_name" {
   
 }
+variable "ports" {
+  default = range(1024, 65000)
+}

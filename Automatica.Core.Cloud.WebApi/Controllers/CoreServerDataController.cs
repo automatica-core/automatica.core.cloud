@@ -13,6 +13,22 @@ using SendGrid.Helpers.Mail;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
+    public class RemoteConnectPortResponse
+    {
+        private int _port;
+
+        public int Port
+        {
+            get => _port + 1023;
+            set => _port = value;
+        }
+    }
+    public class CreateRemoteConnectPortObject
+    {
+        public Guid DriverId { get; set; }
+        public string ServiceName { get; set; }
+        public string TunnelingProtocol { get; set; }
+    }
     public class CreateRemoteConnectObject
     {
         public string TargetSubDomain { get; set; }

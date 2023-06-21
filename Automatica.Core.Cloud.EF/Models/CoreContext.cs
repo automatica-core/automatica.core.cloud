@@ -13,6 +13,7 @@ namespace Automatica.Core.Cloud.EF.Models
         public virtual DbSet<LicenseKey> LicenseKeys { get; set; }
 
         public virtual DbSet<License> Licenses { get; set; }
+        public virtual DbSet<RemoteControlPort> RemoteControlPorts { get; set; }
         public IConfiguration Config { get; }
 
         public CoreContext(IConfiguration config)
@@ -79,6 +80,13 @@ namespace Automatica.Core.Cloud.EF.Models
                 entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
                 entity.HasOne(a => a.This2CoreServerNavigation).WithMany().HasForeignKey(a => a.This2CoreServer);
                 entity.HasOne(a => a.This2VersionKeyNavigation).WithMany().HasForeignKey(a => a.This2VersionKey);
+            });
+
+            modelBuilder.Entity<RemoteControlPort>(entity =>
+            {
+                entity.HasKey(a => a.Port);
+                entity.Property(a => a.Port).ValueGeneratedOnAdd();
+                entity.HasOne(a => a.This2CoreServerNavigation).WithMany().HasForeignKey(a => a.This2CoreServer);
             });
 
             base.OnModelCreating(modelBuilder);

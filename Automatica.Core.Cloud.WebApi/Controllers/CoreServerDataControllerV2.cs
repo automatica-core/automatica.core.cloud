@@ -76,6 +76,55 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             dbContext.SaveChanges();
         }
 
+        [HttpPost, Route("createRemoteConnectPort/{apiKey}/{serverGuid}")]
+        public async Task<RemoteConnectPortResponse> CreateRemoteConnectPort(
+            [FromBody] CreateRemoteConnectPortObject createRemoteConnectPortObject, Guid apiKey)
+        {
+            await using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
+
+            if (server == null)
+            {
+                throw new ArgumentException("Api key invalid");
+            }
+
+            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
+
+            if (license is not { AllowRemoteControl: true })
+            {
+                throw new ArgumentException("No license or invalid license found!");
+            }
+
+            var ports = dbContext.RemoteControlPorts.Where(a => a.This2CoreServer == server.ObjId).ToList();
+            
+            var port = ports.FirstOrDefault(a => a.This2DriverId == createRemoteConnectPortObject.DriverId);
+
+            var ret = new RemoteConnectPortResponse();
+            if (port == null)
+            {
+                var newPort = new RemoteControlPort
+                {
+                    This2CoreServer = server.ObjId,
+                    This2DriverId = createRemoteConnectPortObject.DriverId,
+                    ServiceName = createRemoteConnectPortObject.ServiceName,
+                    LastUsed = DateTime.Now,
+                    PortType = createRemoteConnectPortObject.TunnelingProtocol
+                };
+
+                var entity = dbContext.RemoteControlPorts.Add(newPort);
+                await dbContext.SaveChangesAsync();
+
+                ret.Port = entity.Entity.Port;
+            }
+            else
+            {
+                ret.Port = port.Port;
+                port.LastUsed = DateTime.Now;
+            }
+
+            return ret;
+        }
+
 
         [HttpPost, Route("createRemoteConnect/{apiKey}/{serverGuid}")]
         public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid apiKey)
