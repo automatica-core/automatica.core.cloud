@@ -30,6 +30,10 @@ resource "azurerm_container_group" "frps" {
       port     = 7500
       protocol = "TCP"
     }
+    ports {
+      port     = 3671
+      protocol = "UDP"
+    }
 
     environment_variables = {
    
