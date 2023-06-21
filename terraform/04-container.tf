@@ -55,14 +55,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports1
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports1
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
@@ -70,14 +70,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports2
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports2
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
@@ -85,14 +85,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports2
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports2
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
@@ -100,14 +100,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports3
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports3
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
@@ -115,14 +115,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports4
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports4
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
@@ -130,14 +130,14 @@ resource "azurerm_container_group" "frps" {
     dynamic "ports" {
       for_each = local.ports4
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "TCP"
       }
     } 
     dynamic "ports" {
       for_each = local.ports4
       content  {
-        port   = ports.port
+        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
