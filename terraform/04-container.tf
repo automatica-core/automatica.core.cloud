@@ -56,13 +56,6 @@ resource "azurerm_container_group" "frps" {
       for_each = local.ports1
       content  {
         port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports1
-      content  {
-        port   = ports.value.port
         protocol  = "UDP"
       }
     } 
