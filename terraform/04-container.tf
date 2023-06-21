@@ -1,7 +1,4 @@
 
-variable "ports" {
-  default = range(1024, 65000)
-}
 
 
 resource "azurerm_container_group" "frps" {
@@ -39,7 +36,7 @@ resource "azurerm_container_group" "frps" {
     }
 
     dynamic "ports" {
-      for_each = var.ports
+      for_each = range(1024, 65000)
       ports {
         port   = ports.value
         https_port  = "TCP"
