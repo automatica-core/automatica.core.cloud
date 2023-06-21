@@ -3,7 +3,19 @@ variable "exclusion" {
 }
 
 locals {
-  ports = [for i in range(1024,  65000) : {
+  ports1 = [for i in range(1024,  2047) : {
+    port = i
+  } if !contains(var.exclusion, i)]
+  ports2 = [for i in range(2048,  3071) : {
+    port = i
+  } if !contains(var.exclusion, i)]
+  ports3 = [for i in range(3072,  4095) : {
+    port = i
+  } if !contains(var.exclusion, i)]
+  ports4 = [for i in range(4096,  5119) : {
+    port = i
+  } if !contains(var.exclusion, i)]
+  ports5 = [for i in range(5120,  6143) : {
     port = i
   } if !contains(var.exclusion, i)]
 }
@@ -44,7 +56,51 @@ resource "azurerm_container_group" "frps" {
     }
 
     dynamic "ports" {
-      for_each = local.ports
+      for_each = local.ports1
+      ports {
+        port   = ports.port
+        https_port  = "TCP"
+      }
+      ports {
+        port   = ports.port
+        https_port  = "UDP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports2
+      ports {
+        port   = ports.port
+        https_port  = "TCP"
+      }
+      ports {
+        port   = ports.port
+        https_port  = "UDP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports3
+      ports {
+        port   = ports.port
+        https_port  = "TCP"
+      }
+      ports {
+        port   = ports.port
+        https_port  = "UDP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports4
+      ports {
+        port   = ports.port
+        https_port  = "TCP"
+      }
+      ports {
+        port   = ports.port
+        https_port  = "UDP"
+      }
+    } 
+    dynamic "ports" {
+      for_each = local.ports5
       ports {
         port   = ports.port
         https_port  = "TCP"
