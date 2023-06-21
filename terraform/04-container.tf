@@ -1,4 +1,7 @@
 
+variable "ports" {
+  default = range(1024, 65000)
+}
 
 
 resource "azurerm_container_group" "frps" {
