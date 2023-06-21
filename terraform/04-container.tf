@@ -21,7 +21,7 @@ locals {
 }
 
 
-resource "azurerm_container_group" "frps" {
+resource "  " "frps" {
   name                = "${var.environment}-${var.prefix}-frps"
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
@@ -50,62 +50,17 @@ resource "azurerm_container_group" "frps" {
       port     = 7500
       protocol = "TCP"
     }
-    ports {
-      port     = 3671
-      protocol = "UDP"
-    }
-
+    
     dynamic "ports" {
       for_each = local.ports1
-      ports {
+      content  {
         port   = ports.port
         https_port  = "TCP"
-      }
-      ports {
-        port   = ports.port
-        https_port  = "UDP"
       }
     } 
     dynamic "ports" {
-      for_each = local.ports2
-      ports {
-        port   = ports.port
-        https_port  = "TCP"
-      }
-      ports {
-        port   = ports.port
-        https_port  = "UDP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports3
-      ports {
-        port   = ports.port
-        https_port  = "TCP"
-      }
-      ports {
-        port   = ports.port
-        https_port  = "UDP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports4
-      ports {
-        port   = ports.port
-        https_port  = "TCP"
-      }
-      ports {
-        port   = ports.port
-        https_port  = "UDP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports5
-      ports {
-        port   = ports.port
-        https_port  = "TCP"
-      }
-      ports {
+      for_each = local.ports1
+      content  {
         port   = ports.port
         https_port  = "UDP"
       }
