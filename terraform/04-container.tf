@@ -1,4 +1,12 @@
+variable "exclusion" {
+  default = [80,443, 7000, 7500]
+}
 
+locals "ports" {
+  value = [for i in range(1024,  65000) : {
+    port = i
+  } if !contains(var.exclusion, i)]
+}
 
 
 resource "azurerm_container_group" "frps" {
@@ -36,9 +44,9 @@ resource "azurerm_container_group" "frps" {
     }
 
     dynamic "ports" {
-      for_each = range(1024, 65000)
+      for_each = local.ports
       ports {
-        port   = ports.value
+        port   = ports.port
         https_port  = "TCP"
       }
       ports {
