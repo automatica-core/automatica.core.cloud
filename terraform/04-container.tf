@@ -67,35 +67,20 @@ resource "azurerm_container_group" "frps" {
       }
     } 
 
-    dynamic "ports" {
-      for_each = local.ports2
-      content  {
-        port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports2
-      content  {
-        port   = ports.value.port
-        protocol  = "UDP"
-      }
-    } 
-
-    dynamic "ports" {
-      for_each = local.ports2
-      content  {
-        port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports2
-      content  {
-        port   = ports.value.port
-        protocol  = "UDP"
-      }
-    } 
+    # dynamic "ports" {
+    #   for_each = local.ports2
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "TCP"
+    #   }
+    # } 
+    # dynamic "ports" {
+    #   for_each = local.ports2
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "UDP"
+    #   }
+    # } 
 
     # dynamic "ports" {
     #   for_each = local.ports3
