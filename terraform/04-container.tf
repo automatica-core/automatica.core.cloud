@@ -2,8 +2,8 @@ variable "exclusion" {
   default = [80,443, 7000, 7500]
 }
 
-locals "ports" {
-  value = [for i in range(1024,  65000) : {
+locals {
+  ports = [for i in range(1024,  65000) : {
     port = i
   } if !contains(var.exclusion, i)]
 }
@@ -50,7 +50,7 @@ resource "azurerm_container_group" "frps" {
         https_port  = "TCP"
       }
       ports {
-        port   = ports.value
+        port   = ports.port
         https_port  = "UDP"
       }
     } 
