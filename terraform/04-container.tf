@@ -97,50 +97,50 @@ resource "azurerm_container_group" "frps" {
       }
     } 
 
-    dynamic "ports" {
-      for_each = local.ports3
-      content  {
-        port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports3
-      content  {
-        port   = ports.value.port
-        protocol  = "UDP"
-      }
-    } 
+    # dynamic "ports" {
+    #   for_each = local.ports3
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "TCP"
+    #   }
+    # } 
+    # dynamic "ports" {
+    #   for_each = local.ports3
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "UDP"
+    #   }
+    # } 
     
-    dynamic "ports" {
-      for_each = local.ports4
-      content  {
-        port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports4
-      content  {
-        port   = ports.value.port
-        protocol  = "UDP"
-      }
-    } 
+    # dynamic "ports" {
+    #   for_each = local.ports4
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "TCP"
+    #   }
+    # } 
+    # dynamic "ports" {
+    #   for_each = local.ports4
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "UDP"
+    #   }
+    # } 
 
-    dynamic "ports" {
-      for_each = local.ports4
-      content  {
-        port   = ports.value.port
-        protocol  = "TCP"
-      }
-    } 
-    dynamic "ports" {
-      for_each = local.ports4
-      content  {
-        port   = ports.value.port
-        protocol  = "UDP"
-      }
-    } 
+    # dynamic "ports" {
+    #   for_each = local.ports4
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "TCP"
+    #   }
+    # } 
+    # dynamic "ports" {
+    #   for_each = local.ports4
+    #   content  {
+    #     port   = ports.value.port
+    #     protocol  = "UDP"
+    #   }
+    # } 
     environment_variables = {
    
       DASHBOARD_USER = var.frp_dashboard_user
