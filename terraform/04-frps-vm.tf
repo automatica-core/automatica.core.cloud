@@ -130,7 +130,7 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
 
     admin_ssh_key {
         username       = "frps"
-        public_key     = data.azurerm_key_vault_secret.public_key.value
+        public_key     = base64decode(data.azurerm_key_vault_secret.public_key.value)
     }
 
     custom_data = base64encode(data.template_file.cloud_init.rendered)
@@ -138,7 +138,7 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
     connection {
         host = self.public_ip_address
         user = "frps"
-        private_key = data.azurerm_key_vault_secret.key.value
+        private_key = base64decode(data.azurerm_key_vault_secret.key.value)
     }
 
     lifecycle {
