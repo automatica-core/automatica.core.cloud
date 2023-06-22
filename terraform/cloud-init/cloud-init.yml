@@ -1,0 +1,17 @@
+#cloud-config
+
+package_update: true
+packages:
+  - gnupg2
+  - pass
+  - gdb 
+
+
+runcmd:
+  - sleep 5
+  - cd ~
+  - wget--no-check-certificate -c https://github.com/fatedier/frp/releases/download/v0.49.0/frp_0.49.0_linux_amd64.tar.gz
+  - tar zxvf frp_0.49.0_linux_amd64.tar.gz
+  - cd frp_0.49.0_linux_amd64
+  - cp frps /usr/bin
+  - mkdir -p /etc/frp

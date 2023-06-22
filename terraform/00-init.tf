@@ -87,3 +87,20 @@ variable "dns_ressource_group" {
 variable "dns_zone_name" {
   
 }
+
+variable "key_vault_id" {
+  default = "/subscriptions/e458a87b-c87b-4c65-a0c5-ed2f77a239de/resourceGroups/automatica/providers/Microsoft.KeyVault/vaults/automaticakv"
+}
+
+
+variable "server_image" {
+  default = "UbuntuServer"
+}
+variable "server_version" {
+  default = "20.04-LTS"
+}
+
+variable "server_type" {
+  default = "Standard_B2s"
+}
+
