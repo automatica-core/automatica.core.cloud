@@ -74,13 +74,13 @@ resource "azurerm_network_interface_security_group_association" "sg_link" {
     network_security_group_id = azurerm_network_security_group.sg.id
 }
 
-data "azurerm_key_vault_key" "key" {
+data "azurerm_key_vault_secret" "key" {
   name         = "frps-private"
   key_vault_id = var.key_vault_id
 }
 
-data "azurerm_key_vault_secret" "key" {
-  name         = "frps-private"
+data "azurerm_key_vault_secret" "public_key" {
+  name         = "frps-public"
   key_vault_id = var.key_vault_id
 }
 
@@ -130,7 +130,7 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
 
     admin_ssh_key {
         username       = "frps"
-        public_key     = data.azurerm_key_vault_key.key.public_key_openssh
+        public_key     = data.azurerm_key_vault_secret.public_key.value
     }
 
     custom_data = base64encode(data.template_file.cloud_init.rendered)
