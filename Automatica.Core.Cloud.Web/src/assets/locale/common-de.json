@@ -32,7 +32,9 @@
         "SERVERS": {
             "SERVER_GUID": "Server Id",
             "LAST_KNOWN_CONNECTION": "Letzte Verbindung",
-            "SERVER": "Core Server"
+            "SERVER": "Core Server",
+            "REMOTE_URL": "Remote URL",
+            "REMOTE_URL_DATE": "Remote URL Timestamp"
         },
         "NAME": "Name",
         "RID": "Runtime Identifier",

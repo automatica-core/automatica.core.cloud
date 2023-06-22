@@ -29,12 +29,12 @@
       <dx-text-box valueChangeEvent="keyup" [(value)]="item.apiKey" [readOnly]="true"></dx-text-box>
     </core-cloud-editor>
 
-    <core-cloud-editor [title]="'COMMON.NGROK'" *ngIf="!item.isNewObject">
-      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownNgrokUrl" [readOnly]="true"></dx-text-box>
+    <core-cloud-editor [title]="'COMMON.SERVERS.REMOTE_URL'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownRemoteConnectUrl" [readOnly]="true"></dx-text-box>
     </core-cloud-editor>
 
-    <core-cloud-editor [title]="'COMMON.NGROK_DATE'" *ngIf="!item.isNewObject">
-      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownNgrokUrlDate" [readOnly]="true"></dx-text-box>
+    <core-cloud-editor [title]="'COMMON.SERVERS.REMOTE_URL_DATE'" *ngIf="!item.isNewObject">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.lastKnownRemoteConnectUrlDate" [readOnly]="true"></dx-text-box>
     </core-cloud-editor>
     
   </ng-template>

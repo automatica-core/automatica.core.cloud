@@ -144,11 +144,28 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 throw new ArgumentException("No license or invalid license found!");
             }
 
+            var domains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId).ToList();
+            
             var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
 
             if (!isDnsAvailable)
             {
                 throw new ArgumentException("DNS Name is not available!");
+            }
+
+            bool alreadyExist = false;
+            foreach (var domain in domains)
+            {
+                if (domain.SubDomain == createRemoteConnectObject.TargetSubDomain)
+                {
+                    domain.LastUsed = DateTime.Now;
+                    domain.This2CoreServerNavigation = null;
+                    _context.Update(domain);
+                    alreadyExist = true;
+                    continue;
+                }
+
+                await _dnsManager.RemoveDnsNameAsync(domain.SubDomain, server.ObjId);
             }
 
             var targetUrl = await _dnsManager.CreateDnsNameAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
@@ -157,6 +174,21 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 TunnelUrl = targetUrl
             };
             await SetRemoteConnectUrl(remoteConnectUrl, apiKey);
+
+            if (!alreadyExist)
+            {
+                var subDomain = new RemoteControlSubDomain
+                {
+                    Domain = "",
+                    LastUsed = DateTime.Now,
+                    ObjId = Guid.NewGuid(),
+                    This2CoreServer = server.ObjId,
+                    SubDomain = createRemoteConnectObject.TargetSubDomain
+                };
+                _context.Add(subDomain);
+            }
+
+            await _context.SaveChangesAsync();
 
             return remoteConnectUrl;
         }
@@ -235,7 +267,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         {
             using var dbContext = new CoreContext(Config);
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
+            var versions = dbContext.Plugins.ToList().Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
 
             return from r in versions
                 group r by r.PluginGuid into g

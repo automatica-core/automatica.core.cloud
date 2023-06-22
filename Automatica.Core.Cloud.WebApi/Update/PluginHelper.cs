@@ -57,7 +57,7 @@ namespace Automatica.Core.Cloud.WebApi.Update
                 throw new ArgumentException("User not found..");
             }
 
-            var version = dbContext.Plugins.SingleOrDefault(a => a.VersionObj == manifest.Automatica.PluginVersion && a.Name == manifest.Automatica.Name);
+            var version = dbContext.Plugins.ToList().SingleOrDefault(a => a.VersionObj == manifest.Automatica.PluginVersion && a.Name == manifest.Automatica.Name);
             var isNewUpdate = false;
 
             if (version == null)

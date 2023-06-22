@@ -42,11 +42,11 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             if(deleteOldPackages)
             {
                 // delete only other plugins with the same min core server version to stay compatible
-                var others = DbContext.Plugins.Where(a => a.VersionObj < manifest.Automatica.PluginVersion && a.MinCoreServerVersionObj == manifest.Automatica.MinCoreServerVersion && a.Name == manifest.Automatica.Name && a.Branch == branch);
+                var others = DbContext.Plugins.ToList().Where(a => a.VersionObj < manifest.Automatica.PluginVersion && a.MinCoreServerVersionObj == manifest.Automatica.MinCoreServerVersion && a.Name == manifest.Automatica.Name && a.Branch == branch);
 
                 foreach(var other in others)
                 {
-                    using var newDbContext = new CoreContext(Config);
+                    await using var newDbContext = new CoreContext(Config);
                     await PluginsController.DeletePlugin(newDbContext, GetCloudBlobContainer(), other);
                 }
             }
@@ -82,7 +82,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 throw new ArgumentException("Invalid file...");
             }
-            var version = DbContext.Versions.SingleOrDefault(a => a.VersionObj == manifest.Version && a.Rid == manifest.Rid);
+            var version = DbContext.Versions.ToList().SingleOrDefault(a => a.VersionObj == manifest.Version && a.Rid == manifest.Rid);
             var isNewUpdate = false;
 
             if (version == null)

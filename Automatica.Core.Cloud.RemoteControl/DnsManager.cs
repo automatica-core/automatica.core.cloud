@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Automatica.Core.Cloud.RemoteControl.Configuration;
-using Azure.Identity;
 using Azure;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Dns;
 using Azure.ResourceManager.Resources;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -39,6 +38,37 @@ namespace Automatica.Core.Cloud.RemoteControl
             return dnsZoneLro.Value;
         }
 
+        public async Task<bool> RemoveDnsNameAsync(string name, Guid serverId, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation($"Remove dns dns name {name}...");
+
+            var dnsZone = await GetDnsZoneResource();
+            try
+            {
+                var cnameRecord = await dnsZone.GetDnsCnameRecords().GetAsync(name, cancellationToken);
+
+                if (cnameRecord.HasValue)
+                {
+                    cnameRecord.Value.Data.Metadata.TryGetValue("ServerId", out var serverIdString);
+
+                    if (serverIdString == null || serverId != Guid.Parse(serverIdString))
+                    {
+                        return false;
+                    }
+
+                    await cnameRecord.Value.DeleteAsync(WaitUntil.Completed, null, cancellationToken);
+                }
+            }
+            catch (RequestFailedException rfe)
+            {
+                if (rfe.Status == (int)HttpStatusCode.NotFound)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public async Task<bool> IsDnsNameAvailableAsync(string name, Guid serverId, CancellationToken cancellationToken = default)
         {
