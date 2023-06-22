@@ -114,11 +114,11 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
         name              = "${local.node_name}-disk"
         caching           = "ReadWrite"
         storage_account_type = "Standard_LRS"
-        disk_size_gb = 20
+        disk_size_gb = 50
     }
 
     source_image_reference {
-        publisher = "Canonical"
+        publisher =  "Canonical"
         offer     = var.server_image
         sku       = var.server_version
         version   = "latest"
@@ -133,35 +133,35 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
         public_key     = base64decode(data.azurerm_key_vault_secret.public_key.value)
     }
 
-    custom_data = base64encode(data.template_file.cloud_init.rendered)
-
     connection {
         host = self.public_ip_address
         user = "frps"
         private_key = base64decode(data.azurerm_key_vault_secret.key.value)
     }
-
-    lifecycle {
-      ignore_changes = [custom_data]
-    }
-
     provisioner "file" {
       content = data.template_file.frps.rendered
-      destination = "/etc/frps.ini"
+      destination = "/home/frps/frps.ini"
     }
 
     provisioner "file" {
       content = data.template_file.frps_service.rendered
-      destination = "/etc/systemd/system/frps.service"
+      destination = "/home/frps/frps.service"
     }
 
-    provisioner "remote-exec" {
-     inline = [
-      "systemctl enable --now frps",
-     ]
-    }
+    custom_data = base64encode(data.template_file.cloud_init.rendered)
 
     tags = {
         environment = var.environment
     }
+}
+
+
+
+
+resource "azurerm_dns_a_record" "frps_a" {
+  name                = var.environment
+  zone_name           = var.dns_zone_name
+  resource_group_name = var.dns_ressource_group
+  ttl                 = 300
+  records             = [azurerm_public_ip.node_public_ip.ip_address]
 }

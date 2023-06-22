@@ -8,10 +8,13 @@ packages:
 
 
 runcmd:
-  - sleep 5
+  - sleep 30
   - cd ~
-  - wget--no-check-certificate -c https://github.com/fatedier/frp/releases/download/v0.49.0/frp_0.49.0_linux_amd64.tar.gz
+  - wget --no-check-certificate -c https://github.com/fatedier/frp/releases/download/v0.49.0/frp_0.49.0_linux_amd64.tar.gz
   - tar zxvf frp_0.49.0_linux_amd64.tar.gz
   - cd frp_0.49.0_linux_amd64
   - cp frps /usr/bin
   - mkdir -p /etc/frp
+  - cp /home/frps/frps.ini /etc/frp
+  - cp /home/frps/frps.service /etc/systemd/system
+  - systemctl enable --now frps

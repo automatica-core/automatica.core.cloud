@@ -97,7 +97,7 @@ variable "server_image" {
   default = "UbuntuServer"
 }
 variable "server_version" {
-  default = "20.04-LTS"
+  default = "18.04-LTS"
 }
 
 variable "server_type" {
