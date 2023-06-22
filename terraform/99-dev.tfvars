@@ -1,4 +1,4 @@
-environment = "dev-1"
+environment = "dev"
 environment_tag = "Development"
 
 dns_ressource_group = "automatica"
