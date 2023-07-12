@@ -30,6 +30,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public Guid This2CoreServer { get; set; }
 
         public bool AllowRemoteControl { get; set; }
+
+        public int MaxRemoteTunnels { get; set; }
         public IList<string> Features { get; set; }
     }
 
@@ -110,11 +112,19 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 dbLicense = new License();
             }
 
+            var oldLicenses = Context.Licenses.Where(a => a.This2CoreServer == generateLicenseData.This2CoreServer).ToList();
+
+            foreach (var oldLicense in oldLicenses)
+            {
+                Context.Licenses.Remove(oldLicense);
+            }
+
             dbLicense.This2CoreServer = generateLicenseData.This2CoreServer;
             dbLicense.This2VersionKey = key.ObjId;
-            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, generateLicenseData.MaxUsers, generateLicenseData.This2CoreServer, generateLicenseData.Expires, generateLicenseData.LicensedTo, generateLicenseData.Email, generateLicenseData.AllowRemoteControl, generateLicenseData.Features); 
+            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, generateLicenseData.MaxUsers, generateLicenseData.This2CoreServer, generateLicenseData.Expires, generateLicenseData.LicensedTo, generateLicenseData.Email, generateLicenseData.AllowRemoteControl, generateLicenseData.MaxRemoteTunnels, generateLicenseData.Features); 
             dbLicense.MaxDatapoints = generateLicenseData.MaxDatapoints;
             dbLicense.MaxUsers = generateLicenseData.MaxUsers;
+            dbLicense.MaxRemoteTunnels = generateLicenseData.MaxRemoteTunnels;
             dbLicense.LicensedTo = generateLicenseData.LicensedTo;
             dbLicense.Email = generateLicenseData.LicensedTo;
             dbLicense.FeaturesString = string.Join(",", generateLicenseData.Features);

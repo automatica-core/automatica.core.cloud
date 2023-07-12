@@ -44,7 +44,8 @@
             "MAX_USERS": "Max Benutzer",
             "KEY": "Lizenz",
             "FEATURES": "Features",
-            "ALLOW_REMOTE_CONTROL": "Allow Remote Access/Control"
+            "ALLOW_REMOTE_CONTROL": "Allow Remote Access/Control",
+            "MAX_REMOTE_TUNNELS": "Max erlaubte Tunnel"
         },
         "PLUGINS": {
             "TITLE": "Plugins",

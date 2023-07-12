@@ -9,9 +9,9 @@ using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
 using Automatica.Core.Cloud.RemoteControl;
+using Microsoft.EntityFrameworkCore;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using Microsoft.EntityFrameworkCore;
 using ServerVersion = Automatica.Core.Cloud.EF.Models.ServerVersion;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
@@ -20,12 +20,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
     public class CoreServerDataControllerV2 : AzureStorageController
     {
-        private readonly CoreContext _context;
         private readonly IDnsManager _dnsManager;
 
         public CoreServerDataControllerV2(IConfiguration config, CoreContext context, IDnsManager dnsManager) : base(config)
         {
-            _context = context;
             _dnsManager = dnsManager;
         }
 
@@ -40,14 +38,15 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpGet, Route("license/{apiKey}/{serverGuid}"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
         public string GetLicenseForServer(Guid apiKey)
         {
-            var server = _context.CoreServers.Single(a => a.ApiKey == apiKey);
+            using var dbContext = new CoreContext(Config);
+            var server = dbContext.CoreServers.Single(a => a.ApiKey == apiKey);
 
             if (server == null)
             {
                 throw new ArgumentException("Api key invalid");
             }
 
-            var license = _context.Licenses.Single(a => a.This2CoreServer == server.ObjId);
+            var license = dbContext.Licenses.Single(a => a.This2CoreServer == server.ObjId);
 
             if (license == null)
             {
@@ -129,6 +128,12 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpPost, Route("createRemoteConnect/{apiKey}/{serverGuid}")]
         public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid apiKey)
         {
+            return await CreateRemoteUrl(createRemoteConnectObject, null, apiKey);
+        }
+
+        [HttpPost, Route("createRemoteConnect/{pluginGuid}/{apiKey}/{serverGuid}")]
+        public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid? pluginGuid, Guid apiKey)
+        {
             await using var dbContext = new CoreContext(Config);
             var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
 
@@ -144,9 +149,16 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 throw new ArgumentException("No license or invalid license found!");
             }
 
-            var domains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId).ToList();
-            
-            var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
+            var allDomains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId).AsNoTracking().ToList();
+
+            if (allDomains.Count > license.MaxRemoteTunnels)
+            {
+                throw new ArgumentException("Max allowed licenses reached...");
+            }
+
+            var domains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId && a.PluginGuid == pluginGuid).AsNoTracking().ToList();
+
+            var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId, pluginGuid);
 
             if (!isDnsAvailable)
             {
@@ -158,22 +170,28 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 if (domain.SubDomain == createRemoteConnectObject.TargetSubDomain)
                 {
-                    domain.LastUsed = DateTime.Now;
-                    domain.This2CoreServerNavigation = null;
-                    _context.Update(domain);
+                    var curDomain = dbContext.RemoteControlSubDomains.Single(a => a.ObjId == domain.ObjId);
+                    curDomain.LastUsed = DateTime.Now;
+                    curDomain.PluginGuid = pluginGuid;
+                    dbContext.Update(curDomain);
                     alreadyExist = true;
-                    continue;
                 }
-
-                await _dnsManager.RemoveDnsNameAsync(domain.SubDomain, server.ObjId);
+                else
+                {
+                    await _dnsManager.RemoveDnsNameAsync(domain.SubDomain, server.ObjId, pluginGuid);
+                    dbContext.Remove(domain);
+                }
             }
 
-            var targetUrl = await _dnsManager.CreateDnsNameAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId);
+            var targetUrl = await _dnsManager.CreateDnsNameAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId, pluginGuid);
             var remoteConnectUrl = new RemoteConnectObject
             {
-                TunnelUrl = targetUrl
+                TunnelUrl = targetUrl.url,
+                SubDomain = createRemoteConnectObject.TargetSubDomain
             };
-            await SetRemoteConnectUrl(remoteConnectUrl, apiKey);
+            
+            if(!pluginGuid.HasValue)
+                await SetRemoteConnectUrl(remoteConnectUrl, apiKey);
 
             if (!alreadyExist)
             {
@@ -183,16 +201,16 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                     LastUsed = DateTime.Now,
                     ObjId = Guid.NewGuid(),
                     This2CoreServer = server.ObjId,
+                    PluginGuid = pluginGuid,
                     SubDomain = createRemoteConnectObject.TargetSubDomain
                 };
-                _context.Add(subDomain);
+                dbContext.Add(subDomain);
             }
 
-            await _context.SaveChangesAsync();
+            await dbContext.SaveChangesAsync();
 
             return remoteConnectUrl;
         }
-
 
         [HttpPost, Route("remoteConnect/{apiKey}/{serverGuid}")]
         public async Task<RemoteConnectObject> SetRemoteConnectUrl([FromBody] RemoteConnectObject remoteConnectObj, Guid apiKey)
@@ -210,6 +228,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
             dbContext.Update(server);
             await dbContext.SaveChangesAsync();
+            
             return remoteConnectObj;
         }
 

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,9 +37,9 @@ namespace Automatica.Core.Cloud.RemoteControl
             return dnsZoneLro.Value;
         }
 
-        public async Task<bool> RemoveDnsNameAsync(string name, Guid serverId, CancellationToken cancellationToken = default)
+        public async Task<bool> RemoveDnsNameAsync(string name, Guid serverId, Guid? pluginGuid, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation($"Remove dns dns name {name}...");
+            _logger.LogInformation($"Remove dns name {name}...");
 
             var dnsZone = await GetDnsZoneResource();
             try
@@ -54,6 +53,16 @@ namespace Automatica.Core.Cloud.RemoteControl
                     if (serverIdString == null || serverId != Guid.Parse(serverIdString))
                     {
                         return false;
+                    }
+
+                    if (pluginGuid.HasValue)
+                    {
+                        cnameRecord.Value.Data.Metadata.TryGetValue("PluginGuid", out var pluginGuidString);
+
+                        if (pluginGuidString == null || pluginGuid != Guid.Parse(pluginGuidString))
+                        {
+                            return false;
+                        }
                     }
 
                     await cnameRecord.Value.DeleteAsync(WaitUntil.Completed, null, cancellationToken);
@@ -70,7 +79,7 @@ namespace Automatica.Core.Cloud.RemoteControl
             return false;
         }
 
-        public async Task<bool> IsDnsNameAvailableAsync(string name, Guid serverId, CancellationToken cancellationToken = default)
+        public async Task<bool> IsDnsNameAvailableAsync(string name, Guid serverId, Guid? pluginGuid, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation($"Checking if dns name {name} is available...");
 
@@ -88,6 +97,16 @@ namespace Automatica.Core.Cloud.RemoteControl
                         return false;
                     }
 
+                    if (pluginGuid.HasValue)
+                    {
+                        cnameRecord.Value.Data.Metadata.TryGetValue("PluginGuid", out var pluginGuidString);
+
+                        if (pluginGuidString == null || pluginGuid != Guid.Parse(pluginGuidString))
+                        {
+                            return false;
+                        }
+                    }
+
                     return true;
                 }
             }
@@ -102,9 +121,9 @@ namespace Automatica.Core.Cloud.RemoteControl
             return false;
         }
 
-        public async Task<string> CreateDnsNameAsync(string name, Guid serverId, CancellationToken cancellationToken = default)
+        public async Task<(string url, string subDomain)> CreateDnsNameAsync(string name, Guid serverId, Guid? pluginGuid, CancellationToken cancellationToken = default)
         {
-            var isAvailable = await IsDnsNameAvailableAsync(name, serverId, cancellationToken);
+            var isAvailable = await IsDnsNameAvailableAsync(name, serverId, pluginGuid, cancellationToken);
 
             if (!isAvailable)
             {
@@ -117,7 +136,11 @@ namespace Automatica.Core.Cloud.RemoteControl
             {
                 Cname = _config.CurrentValue.CNameTarget,
                 TtlInSeconds = 3600,
-                Metadata = { {"ServerId", $"{serverId}"} }
+                Metadata =
+                {
+                    {"ServerId", $"{serverId}"},
+                    {"PluginGuid", $"{pluginGuid ?? serverId}"}
+                }
             };
 
             if (!String.IsNullOrEmpty(_config.CurrentValue.CNamePrefix))
@@ -126,7 +149,7 @@ namespace Automatica.Core.Cloud.RemoteControl
             }
 
             await all.CreateOrUpdateAsync(WaitUntil.Completed, name, dnsCnameRecord, cancellationToken: cancellationToken);
-            return $"{name}.{_config.CurrentValue.DnsZoneName}";
+            return ($"{name}.{_config.CurrentValue.DnsZoneName}", name);
         }
     }
 }

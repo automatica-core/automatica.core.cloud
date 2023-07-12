@@ -20,6 +20,8 @@ namespace Automatica.Core.Cloud.EF.Models
 
         public bool AllowRemoteControl { get; set; }
 
+        public int MaxRemoteTunnels { get; set; }
+
         public CoreServer This2CoreServerNavigation { get; set; }
 
         public LicenseKey This2VersionKeyNavigation { get; set; }

@@ -35,6 +35,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     }
     public class RemoteConnectObject
     {
+        public string SubDomain { get; set; }
         public string TunnelUrl { get; set; }
     }
 

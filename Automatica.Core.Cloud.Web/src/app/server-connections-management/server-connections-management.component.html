@@ -3,7 +3,7 @@
 
     <core-master-detail>
       <ng-container master>
-        <core-cloud-list [columns]="['serverName','version','lastKnownConnection','lastKnownRemoteConnectUrl', 'lastKnownRemoteConnectUrlDate']"></core-cloud-list>
+        <core-cloud-list [columns]="['serverName', 'serverGuid', 'version','lastKnownConnection','lastKnownRemoteConnectUrl', 'lastKnownRemoteConnectUrlDate']"></core-cloud-list>
       </ng-container>
       <ng-container detail>
         <core-server-connections-detail></core-server-connections-detail>

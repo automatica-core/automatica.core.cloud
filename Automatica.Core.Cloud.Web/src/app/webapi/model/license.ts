@@ -27,6 +27,7 @@ export interface License {
     featuresString?: string;
     isNewObject?: boolean;
     allowRemoteControl?: boolean;
+    maxRemoteTunnels?: number;
 
     features: string[];
 }

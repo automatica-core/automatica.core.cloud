@@ -38,7 +38,8 @@ export class LicenseManagementService extends BaseFormService<License> {
             maxUsers: object.maxUsers,
             this2CoreServer: object.this2CoreServerNavigation.objId,
             features: object.features,
-            allowRemoteControl: object.allowRemoteControl
+            allowRemoteControl: object.allowRemoteControl,
+            maxRemoteTunnels: object.maxRemoteTunnels
         };
 
         return super.call<License>(() => this.licenseService.generateLicense("1", this.userDataService.user.apiKey, generateData, "response").toPromise());

@@ -1,5 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
 namespace Automatica.Core.Cloud.EF.Models
 {
@@ -29,6 +33,10 @@ namespace Automatica.Core.Cloud.EF.Models
                 {
                     options.EnableRetryOnFailure();
                 });
+                optionsBuilder.LogTo(m => Debug.WriteLine(m), new[] { DbLoggerCategory.Database.Name },
+                    LogLevel.Information);
+
+
             }
         }
 

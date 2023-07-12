@@ -4,6 +4,7 @@ using Automatica.Core.Cloud.EF.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Automatica.Core.Cloud.EF.Migrations
 {
     [DbContext(typeof(CoreContext))]
-    partial class CoreContextModelSnapshot : ModelSnapshot
+    [Migration("20230712104013_AddMaxRemoteTunnelsToLicenseEntity")]
+    partial class AddMaxRemoteTunnelsToLicenseEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -251,9 +254,6 @@ namespace Automatica.Core.Cloud.EF.Migrations
 
                     b.Property<DateTime>("LastUsed")
                         .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("PluginGuid")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("SubDomain")
                         .HasColumnType("nvarchar(max)");

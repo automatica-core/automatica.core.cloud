@@ -20,5 +20,6 @@ export interface GenerateLicenseData {
     email?: string;
     this2CoreServer?: string;
     allowRemoteControl?: boolean;
+    maxRemoteTunnels?: number;
     features?: Array<string>;
 }
