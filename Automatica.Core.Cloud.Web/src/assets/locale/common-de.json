@@ -45,7 +45,8 @@
             "KEY": "Lizenz",
             "FEATURES": "Features",
             "ALLOW_REMOTE_CONTROL": "Allow Remote Access/Control",
-            "MAX_REMOTE_TUNNELS": "Max erlaubte Tunnel"
+            "MAX_REMOTE_TUNNELS": "Max erlaubte Tunnel",
+            "MAX_RECORDING_DATAPOINTS": "Max erlaubte Aufzeichnungen"
         },
         "PLUGINS": {
             "TITLE": "Plugins",

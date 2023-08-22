@@ -22,6 +22,8 @@ namespace Automatica.Core.Cloud.EF.Models
 
         public int MaxRemoteTunnels { get; set; }
 
+        public long MaxRecordingDataPoints { get; set; }
+
         public CoreServer This2CoreServerNavigation { get; set; }
 
         public LicenseKey This2VersionKeyNavigation { get; set; }

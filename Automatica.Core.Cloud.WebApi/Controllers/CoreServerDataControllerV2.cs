@@ -39,14 +39,14 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public string GetLicenseForServer(Guid apiKey)
         {
             using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.Single(a => a.ApiKey == apiKey);
+            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
 
             if (server == null)
             {
                 throw new ArgumentException("Api key invalid");
             }
 
-            var license = dbContext.Licenses.Single(a => a.This2CoreServer == server.ObjId);
+            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
 
             if (license == null)
             {

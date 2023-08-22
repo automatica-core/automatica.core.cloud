@@ -28,6 +28,7 @@ export interface License {
     isNewObject?: boolean;
     allowRemoteControl?: boolean;
     maxRemoteTunnels?: number;
+    maxRecordingDataPoints?: number;
 
     features: string[];
 }

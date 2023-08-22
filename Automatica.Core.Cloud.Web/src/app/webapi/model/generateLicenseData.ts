@@ -21,5 +21,6 @@ export interface GenerateLicenseData {
     this2CoreServer?: string;
     allowRemoteControl?: boolean;
     maxRemoteTunnels?: number;
+    maxRecordingDataPoints?: number;
     features?: Array<string>;
 }

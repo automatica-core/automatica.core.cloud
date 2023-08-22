@@ -30,6 +30,10 @@
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_REMOTE_TUNNELS'">
       <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRemoteTunnels" [readOnly]="!item.isNewObject"></dx-number-box>
     </core-cloud-editor>
+    
+    <core-cloud-editor [title]="'COMMON.LICENSE.MAX_RECORDING_DATAPOINTS'">
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRecordingDataPoints" [readOnly]="!item.isNewObject"></dx-number-box>
+    </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.KEY'" *ngIf="!item.isNewObject">
       <dx-text-area [readOnly]="true" valueChangeEvent="keyup" [(value)]="item.licenseKey" [height]="400"></dx-text-area>
