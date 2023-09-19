@@ -10,6 +10,8 @@ const AppRoutes: Routes = [
             }, {
                 path: "versions", loadChildren: () => import('../server-versions-management/server-versions-management.module').then(m => m.ServerVersionsManagementModule)
             }, {
+                path: "docker-versions", loadChildren: () => import('../server-docker-versions-management/server-docker-versions-management.module').then(m => m.ServerDockerVersionsManagementModule)
+            }, {
                 path: "plugins", loadChildren: () => import('../plugins/plugins.module').then(m => m.PluginsModule)
             }, {
                 path: "servers", loadChildren: () => import('../server-connections-management/server-connections-management.module').then(m => m.ServerConnectionsManagementModule)

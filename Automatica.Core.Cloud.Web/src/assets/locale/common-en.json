@@ -16,6 +16,7 @@
             "EMAIL": "E-Mail"
         },
         "VERSION": "Version",
+        "DOCKER_VERSION": "Docker Version",
         "CHANGELOG":"Changelog",
         "VERSIONS": {
             "PRERELEASE": "Pre-Release",

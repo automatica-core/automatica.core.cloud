@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
-using Microsoft.Extensions.Options;
 using System.Diagnostics;
 
 namespace Automatica.Core.Cloud.EF.Models
@@ -11,6 +9,7 @@ namespace Automatica.Core.Cloud.EF.Models
     {
         public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<ServerVersion> Versions { get; set; }
+        public virtual DbSet<ServerDockerVersion> DockerVersions { get; set; }
         public virtual DbSet<Plugin> Plugins { get; set; }
         public virtual DbSet<PluginFeature> PluginFeatures { get; set; }
         public virtual DbSet<CoreServer> CoreServers { get; set; }
@@ -43,6 +42,13 @@ namespace Automatica.Core.Cloud.EF.Models
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ServerVersion>(entity =>
+            {
+                entity.HasKey(a => a.ObjId);
+                entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.Branch).HasDefaultValue("develop");
+            });
+
+            modelBuilder.Entity<ServerDockerVersion>(entity =>
             {
                 entity.HasKey(a => a.ObjId);
                 entity.Property(a => a.ObjId).ValueGeneratedOnAdd();

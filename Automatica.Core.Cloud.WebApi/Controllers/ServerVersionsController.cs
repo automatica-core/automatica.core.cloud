@@ -49,7 +49,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             await Update.UpdateHelper.UploadUpdateFile(Logger, myFile, container, coreServerVersion);
 
             DbContext.Versions.Update(coreServerVersion);
-            DbContext.SaveChanges();
+            await DbContext.SaveChangesAsync();
         }
 
         [HttpDelete, Route("delete")]
@@ -88,7 +88,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             if (coreServerVersion != null)
             {
                 coreServerVersion.Version = serverVersion.Version;
-                coreServerVersion.IsPrerelease = serverVersion.IsPrerelease;
+                coreServerVersion.IsPreRelease = serverVersion.IsPreRelease;
                 coreServerVersion.IsPublic = serverVersion.IsPublic;
                 coreServerVersion.ChangeLog = serverVersion.ChangeLog;
                 coreServerVersion.Rid = serverVersion.Rid;

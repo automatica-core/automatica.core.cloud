@@ -1,14 +1,15 @@
 import { Injectable } from "@angular/core";
-import { ServerVersion, CoreServerVersionsService } from "../webapi";
 import { BaseFormService } from "../base/base-form.service";
 import { v4 as uuid } from "uuid";
+import { ServerDockerVersion } from "../webapi/model/serverDockerVersion";
+import { CoreServerDockerVersionsService } from "../webapi/api/coreServerDockerVersions.service";
 
 @Injectable()
-export class ServerVersionService extends BaseFormService<ServerVersion> {
+export class ServerDockerVersionService extends BaseFormService<ServerDockerVersion> {
 
-    public versions: ServerVersion[] = [];
+    public versions: ServerDockerVersion[] = [];
 
-    constructor(private coreServerVersionsService: CoreServerVersionsService) {
+    constructor(private coreServerVersionsService: CoreServerDockerVersionsService) {
         super();
 
     }
@@ -20,7 +21,7 @@ export class ServerVersionService extends BaseFormService<ServerVersion> {
         this.versions = v;
     }
 
-    createNew(): ServerVersion {
+    createNew(): ServerDockerVersion {
         return {
             objId: uuid(),
             isNewObject: true,
@@ -39,6 +40,6 @@ export class ServerVersionService extends BaseFormService<ServerVersion> {
     }
 
     public get title() {
-        return "COMMON.VERSIONS.TITLE";
+        return "COMMON.DOCKER_VERSIONS.TITLE";
     }
 }

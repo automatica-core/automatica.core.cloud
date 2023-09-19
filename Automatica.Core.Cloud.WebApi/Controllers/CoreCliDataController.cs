@@ -1,5 +1,4 @@
-﻿using Automatica.Core.Cloud.EF.Models;
-using Automatica.Core.Cloud.WebApi.Authentication;
+﻿using Automatica.Core.Cloud.WebApi.Authentication;
 using Automatica.Core.Cloud.WebApi.Update;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Automatica.Core.Cloud.EF.Models;
+using ServerVersion = Microsoft.EntityFrameworkCore.ServerVersion;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -88,9 +89,9 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             if (version == null)
             {
                 isNewUpdate = true;
-                version = new ServerVersion()
+                version = new EF.Models.ServerVersion()
                 {
-                    IsPrerelease = manifest.PreRelease,
+                    IsPreRelease = manifest.PreRelease,
                     Rid = manifest.Rid,
                     ChangeLog = "",
                     Version = manifest.Version.ToString(),
@@ -108,8 +109,35 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 {
                     DbContext.Versions.Update(version);
                 }
-                DbContext.SaveChanges();
+                await DbContext.SaveChangesAsync();
             }
+        }
+
+        [HttpPost, Route("deployDocker/{branch}/{apiKey}")]
+        [DisableRequestSizeLimit]
+        [NeedsRole(UserRole.SystemAdministrator)]
+        public async Task<ServerDockerVersion> DeployDocker([FromBody]ServerDockerVersion serverDockerVersion, [FromRoute]string branch)
+        {
+            var coreServerVersion = DbContext.DockerVersions.SingleOrDefault(a => a.ObjId == serverDockerVersion.ObjId);
+
+            if (coreServerVersion != null)
+            {
+                coreServerVersion.Version = serverDockerVersion.Version;
+                coreServerVersion.IsPreRelease = serverDockerVersion.IsPreRelease;
+                coreServerVersion.IsPublic = serverDockerVersion.IsPublic;
+                coreServerVersion.ChangeLog = serverDockerVersion.ChangeLog;
+                coreServerVersion.Branch = branch;
+                coreServerVersion.ImageName = serverDockerVersion.ImageName;
+                coreServerVersion.ImageTag = serverDockerVersion.ImageTag;
+                DbContext.DockerVersions.Update(coreServerVersion);
+            }
+            else
+            {
+                DbContext.DockerVersions.Add(serverDockerVersion);
+            }
+            await DbContext.SaveChangesAsync();
+
+            return serverDockerVersion;
         }
 
         [HttpPost, Route("deploy/{apiKey}")]

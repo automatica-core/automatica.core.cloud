@@ -1,0 +1,28 @@
+<core-cloud-form [name]="'serverVersionForm'" [loading]="loading">
+  <ng-template #template let-item>
+
+    <core-cloud-editor [title]="'COMMON.VERSION'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.version"></dx-text-box>
+    </core-cloud-editor>    
+
+    <core-cloud-editor [title]="'COMMON.CHANGELOG'">
+      <dx-text-area valueChangeEvent="keyup" [(value)]="item.changeLog" height="200"></dx-text-area>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.IMAGE_NAME'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.imageName"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.IMAGE_TAG'">
+      <dx-text-box valueChangeEvent="keyup" [(value)]="item.imageTage"></dx-text-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.VERSIONS.PRERELEASE'">
+      <dx-check-box class="float-left" valueChangeEvent="keyup" [(value)]="item.isPrerelease"></dx-check-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.VERSIONS.IS_PUBLIC'">
+      <dx-check-box class="float-left" valueChangeEvent="keyup" [(value)]="item.isPublic"></dx-check-box>
+    </core-cloud-editor>
+  </ng-template>
+</core-cloud-form>

@@ -12,12 +12,12 @@
 import { Version } from './version';
 
 
-export interface ServerVersion { 
+export interface ServerDockerVersion { 
     objId?: string;
     version?: string;
     readonly versionObj?: Version;
-    azureUrl?: string;
-    azureFileName?: string;
+    imageName?: string;
+    imageTag?: string;
     changeLog?: string;
     isPreRelease?: boolean;
     isPublic?: boolean;

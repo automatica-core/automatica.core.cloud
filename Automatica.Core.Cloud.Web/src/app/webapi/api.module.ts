@@ -11,6 +11,7 @@ import { InfoService } from './api/info.service';
 import { LicenseService } from './api/license.service';
 import { PluginsService } from './api/plugins.service';
 import { UserService } from './api/user.service';
+import { CoreServerDockerVersionsService } from './api/coreServerDockerVersions.service';
 
 @NgModule({
   imports:      [],
@@ -21,6 +22,7 @@ import { UserService } from './api/user.service';
     CoreServerService,
     CoreServerDataService,
     CoreServerVersionsService,
+    CoreServerDockerVersionsService,
     InfoService,
     LicenseService,
     PluginsService,

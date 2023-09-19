@@ -1,0 +1,14 @@
+<div class="container-fluid no-breadcrumbs page-dashboard" style="background-color: white">
+  <div class="row core-full-height">
+
+    <core-master-detail>
+      <ng-container master>
+        <core-cloud-list [columns]="['version','imageTag', 'branch']"></core-cloud-list>
+      </ng-container>
+      <ng-container detail>
+        <core-server-docker-versions-detail></core-server-docker-versions-detail>
+      </ng-container>
+    </core-master-detail>
+
+  </div>
+</div>
