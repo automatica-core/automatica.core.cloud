@@ -236,3 +236,4 @@ wwwroot
 wwwroot/*
 
 .appsettings.ignore
+appsettings.Development.json
