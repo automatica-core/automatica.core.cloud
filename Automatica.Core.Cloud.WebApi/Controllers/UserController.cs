@@ -12,6 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -31,7 +32,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         private readonly CoreContext _context;
         private readonly JwtInfoProvider _info;
 
-        public UserController(CoreContext context, JwtInfoProvider info)
+        public UserController(CoreContext context, JwtInfoProvider info, IConfiguration config) : base(config)
         {
             _context = context;
             _info = info;

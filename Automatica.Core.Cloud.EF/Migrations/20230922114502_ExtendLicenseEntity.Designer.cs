@@ -4,6 +4,7 @@ using Automatica.Core.Cloud.EF.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Automatica.Core.Cloud.EF.Migrations
 {
     [DbContext(typeof(CoreContext))]
-    partial class CoreContextModelSnapshot : ModelSnapshot
+    [Migration("20230922114502_ExtendLicenseEntity")]
+    partial class ExtendLicenseEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,9 +75,6 @@ namespace Automatica.Core.Cloud.EF.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("AllowRemoteControl")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("AllowTextToSpeech")
                         .HasColumnType("bit");
 
                     b.Property<string>("Email")

@@ -16,7 +16,9 @@
             "EMAIL": "E-Mail"
         },
         "VERSION": "Version",
-        "DOCKER_VERSION": "Docker Version",
+        "DOCKER_VERSIONS": "Docker Versionen",
+        "IMAGE_NAME": "Image Name",
+        "IMAGE_TAG": "Image Tag",
         "CHANGELOG":"Changelog",
         "VERSIONS": {
             "PRERELEASE": "Pre-Release",
@@ -47,7 +49,10 @@
             "FEATURES": "Features",
             "ALLOW_REMOTE_CONTROL": "Allow Remote Access/Control",
             "MAX_REMOTE_TUNNELS": "Max allowed tunnels",
-            "MAX_RECORDING_DATAPOINTS": "Max allowed recordings"
+            "MAX_RECORDING_DATAPOINTS": "Max allowed recordings",
+            "EXPIRES_AT": "Valid until",
+            "MAX_SATELLITES": "Max satellites",
+            "ALLOW_TTS": "Allow Text-to-Speech"
         },
         "PLUGINS": {
             "TITLE": "Plugins",

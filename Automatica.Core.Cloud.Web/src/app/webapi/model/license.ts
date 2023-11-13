@@ -15,6 +15,7 @@ import { LicenseKey } from './licenseKey';
 
 export interface License {
     objId?: string;
+    expiresAt?: Date;
     this2CoreServer?: string;
     licenseKey?: string;
     this2VersionKey?: string;
@@ -29,6 +30,8 @@ export interface License {
     allowRemoteControl?: boolean;
     maxRemoteTunnels?: number;
     maxRecordingDataPoints?: number;
+    maxSatellites?: number;
+    allowTextToSpeech?: boolean;
 
     features: string[];
 }

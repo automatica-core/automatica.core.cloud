@@ -2,8 +2,12 @@
   <ng-template #template let-item>
 
     <core-cloud-editor [title]="'COMMON.SERVERS.SERVER'">
-      <dx-select-box (onValueChanged)="serverChaned($event)" [items]="servers" [value]="item.this2CoreServer" valueExpr="objId"
-        displayExpr="serverName" [readOnly]="!item.isNewObject"></dx-select-box>
+      <dx-select-box (onValueChanged)="serverChaned($event)" [items]="servers" [value]="item.this2CoreServer"
+        valueExpr="objId" displayExpr="serverName" [readOnly]="!item.isNewObject"></dx-select-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.EXPIRES_AT'">
+      <dx-date-box type="date" [(value)]="item.expiresAt" [readOnly]="!item.isNewObject"></dx-date-box>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSED_TO'">
@@ -16,7 +20,8 @@
 
 
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_DATAPOINTS'">
-      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxDatapoints" [readOnly]="!item.isNewObject"></dx-number-box>
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxDatapoints"
+        [readOnly]="!item.isNewObject"></dx-number-box>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_USERS'">
@@ -28,19 +33,32 @@
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_REMOTE_TUNNELS'">
-      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRemoteTunnels" [readOnly]="!item.isNewObject"></dx-number-box>
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRemoteTunnels"
+        [readOnly]="!item.isNewObject"></dx-number-box>
     </core-cloud-editor>
-    
+
     <core-cloud-editor [title]="'COMMON.LICENSE.MAX_RECORDING_DATAPOINTS'">
-      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRecordingDataPoints" [readOnly]="!item.isNewObject"></dx-number-box>
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxRecordingDataPoints"
+        [readOnly]="!item.isNewObject"></dx-number-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.MAX_SATELLITES'">
+      <dx-number-box valueChangeEvent="keyup" [(value)]="item.maxSatellites"
+        [readOnly]="!item.isNewObject"></dx-number-box>
+    </core-cloud-editor>
+
+    <core-cloud-editor [title]="'COMMON.LICENSE.ALLOW_TTS'">
+      <dx-check-box [(value)]="item.allowTextToSpeech" [readOnly]="!item.isNewObject"></dx-check-box>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.KEY'" *ngIf="!item.isNewObject">
-      <dx-text-area [readOnly]="true" valueChangeEvent="keyup" [(value)]="item.licenseKey" [height]="400"></dx-text-area>
+      <dx-text-area [readOnly]="true" valueChangeEvent="keyup" [(value)]="item.licenseKey"
+        [height]="400"></dx-text-area>
     </core-cloud-editor>
 
     <core-cloud-editor [title]="'COMMON.LICENSE.FEATURES'">
-      <dx-data-grid [dataSource]="licenseService.features" keyExpr="featureName" [(selectedRowKeys)]="selectedFeatures" [readOnly]="!item.isNewObject">
+      <dx-data-grid [dataSource]="licenseService.features" keyExpr="featureName" [(selectedRowKeys)]="selectedFeatures"
+        [readOnly]="!item.isNewObject">
         <dxo-selection mode="multiple"></dxo-selection>
         <dxi-column dataField="featureName" caption="Name"></dxi-column>
       </dx-data-grid>

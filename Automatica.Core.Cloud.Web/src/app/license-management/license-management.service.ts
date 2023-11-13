@@ -31,7 +31,7 @@ export class LicenseManagementService extends BaseFormService<License> {
     save(object: License): Promise<License> {
         const generateData: GenerateLicenseData = {
             objId: object.objId,
-            expires: new Date(2018, 12, 31, 23, 59, 59, 59),
+            expiresAt: object.expiresAt,
             email: object.email,
             licensedTo: object.licensedTo,
             maxDatapoints: object.maxDatapoints,
@@ -40,7 +40,9 @@ export class LicenseManagementService extends BaseFormService<License> {
             features: object.features,
             allowRemoteControl: object.allowRemoteControl,
             maxRemoteTunnels: object.maxRemoteTunnels,
-            maxRecordingDataPoints: object.maxRecordingDataPoints
+            maxRecordingDataPoints: object.maxRecordingDataPoints,
+            allowTextToSpeech: object.allowTextToSpeech,
+            maxSatellites: object.maxSatellites
         };
 
         return super.call<License>(() => this.licenseService.generateLicense("1", this.userDataService.user.apiKey, generateData, "response").toPromise());

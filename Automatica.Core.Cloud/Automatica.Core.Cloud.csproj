@@ -29,6 +29,7 @@
     <ProjectReference Include="..\Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj" />
+    <ProjectReference Include="..\Automatica.Core.Cloud.TTS\Automatica.Core.Cloud.TTS.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.WebApi\Automatica.Core.Cloud.WebApi.csproj" />
   </ItemGroup>
 

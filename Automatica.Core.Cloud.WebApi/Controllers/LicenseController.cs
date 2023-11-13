@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -19,7 +20,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     public class GenerateLicenseData
     {
         public Guid ObjId { get; set; }
-        public DateTime Expires { get; set; }
+        public DateTime ExpiresAt { get; set; }
 
         public int MaxDatapoints { get; set; }
         public int MaxUsers { get; set; }
@@ -33,13 +34,15 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
         public int MaxRemoteTunnels { get; set; }
         public long MaxRecordingDataPoints { get; set; }
+        public int MaxSatellites { get; set; }
+        public bool AllowTextToSpeech { get; set; }
         public IList<string> Features { get; set; }
     }
 
     [Route("webapi/v{version:apiVersion}/license"), ApiVersion("1.0"), AllowAnonymous]
     public class LicenseController : BaseController
     {
-        public LicenseController(CoreContext context, ILicenseManager licenseManager)
+        public LicenseController(CoreContext context, ILicenseManager licenseManager, IConfiguration config) : base(config)
         {
             Context = context;
             LicenseManager = licenseManager;
@@ -122,7 +125,20 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
             dbLicense.This2CoreServer = generateLicenseData.This2CoreServer;
             dbLicense.This2VersionKey = key.ObjId;
-            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, generateLicenseData.MaxUsers, generateLicenseData.This2CoreServer, generateLicenseData.Expires, generateLicenseData.LicensedTo, generateLicenseData.Email, generateLicenseData.AllowRemoteControl, generateLicenseData.MaxRemoteTunnels, generateLicenseData.MaxRecordingDataPoints, generateLicenseData.Features); 
+            
+            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, 
+                generateLicenseData.MaxUsers, 
+                generateLicenseData.This2CoreServer, 
+                generateLicenseData.ExpiresAt, 
+                generateLicenseData.LicensedTo, 
+                generateLicenseData.Email, 
+                generateLicenseData.AllowRemoteControl, 
+                generateLicenseData.MaxRemoteTunnels, 
+                generateLicenseData.MaxRecordingDataPoints, 
+                generateLicenseData.MaxSatellites, 
+                generateLicenseData.AllowTextToSpeech, 
+                generateLicenseData.Features); 
+
             dbLicense.MaxDatapoints = generateLicenseData.MaxDatapoints;
             dbLicense.MaxUsers = generateLicenseData.MaxUsers;
             dbLicense.MaxRemoteTunnels = generateLicenseData.MaxRemoteTunnels;
@@ -131,6 +147,9 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             dbLicense.FeaturesString = string.Join(",", generateLicenseData.Features);
             dbLicense.AllowRemoteControl = generateLicenseData.AllowRemoteControl;
             dbLicense.MaxRecordingDataPoints = generateLicenseData.MaxRecordingDataPoints;
+            dbLicense.MaxSatellites = generateLicenseData.MaxSatellites;
+            dbLicense.ExpiresAt  = generateLicenseData.ExpiresAt;
+            dbLicense.AllowTextToSpeech = generateLicenseData.AllowTextToSpeech;
 
             if (isNew)
             {

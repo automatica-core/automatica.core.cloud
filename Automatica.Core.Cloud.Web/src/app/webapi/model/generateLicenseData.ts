@@ -13,7 +13,7 @@
 
 export interface GenerateLicenseData { 
     objId?: string;
-    expires?: Date;
+    expiresAt: Date;
     maxDatapoints?: number;
     maxUsers?: number;
     licensedTo?: string;
@@ -22,5 +22,7 @@ export interface GenerateLicenseData {
     allowRemoteControl?: boolean;
     maxRemoteTunnels?: number;
     maxRecordingDataPoints?: number;
+    maxSatellites?: number;
+    allowTextToSpeech?: boolean;
     features?: Array<string>;
 }

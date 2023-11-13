@@ -8,7 +8,7 @@ import { CloudLibModule } from "../cloud-lib/cloud-lib.module";
 import { MasterDetailModule } from "../cloud-lib/master-detail/master-detail.module";
 import { CloudFormModule } from "../cloud-lib/cloud-form/cloud-form.module";
 import { CloudListModule } from "../cloud-lib/cloud-list/cloud-list.module";
-import { DxFileUploaderModule, DxSelectBoxModule, DxCheckBoxModule, DxTextBoxModule, DxTextAreaModule, DxNumberBoxModule, DxDataGridModule } from "devextreme-angular";
+import { DxFileUploaderModule, DxSelectBoxModule, DxCheckBoxModule, DxTextBoxModule, DxTextAreaModule, DxNumberBoxModule, DxDataGridModule, DxDateBoxModule } from "devextreme-angular";
 import { LicenseManagementRoutingModule } from "./license-management.routing.module";
 import { LicenseManagementService } from "./license-management.service";
 import { BaseFormService } from "../base/base-form.service";
@@ -33,6 +33,7 @@ import { CloudEditorModule } from "../cloud-lib/cloud-editor/cloud-editor.module
     CloudEditorModule,
     DxNumberBoxModule,
     DxTextAreaModule,
+    DxDateBoxModule,
     LicenseManagementRoutingModule
   ],
   declarations: [LicenseManagementComponent, LicenseDetailComponent],

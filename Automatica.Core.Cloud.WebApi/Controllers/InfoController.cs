@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -12,6 +10,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public string Info()
         {
             return "This is sparta";
+        }
+
+        public InfoController(IConfiguration config) : base(config)
+        {
         }
     }
 }

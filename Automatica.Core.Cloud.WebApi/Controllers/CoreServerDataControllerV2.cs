@@ -75,17 +75,14 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             dbContext.SaveChanges();
         }
 
+     
+
         [HttpPost, Route("createRemoteConnectPort/{apiKey}/{serverGuid}")]
         public async Task<RemoteConnectPortResponse> CreateRemoteConnectPort(
             [FromBody] CreateRemoteConnectPortObject createRemoteConnectPortObject, Guid apiKey)
         {
             await using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
+            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
 
             var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
 
@@ -93,6 +90,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 throw new ArgumentException("No license or invalid license found!");
             }
+
 
             var ports = dbContext.RemoteControlPorts.Where(a => a.This2CoreServer == server.ObjId).ToList();
             
@@ -135,12 +133,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid? pluginGuid, Guid apiKey)
         {
             await using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
+            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
 
             var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
 
@@ -216,12 +209,8 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public async Task<RemoteConnectObject> SetRemoteConnectUrl([FromBody] RemoteConnectObject remoteConnectObj, Guid apiKey)
         {
             await using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
 
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
+            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
 
             server.LastKnownRemoteConnectUrlDate = DateTime.Now;
             server.LastKnownRemoteConnectUrl = remoteConnectObj.TunnelUrl;
@@ -262,17 +251,35 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}/{serverGuid}")]
-        public ServerVersion CheckForUpdates(string rid, string coreServerVersion)
+        public async Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion, Guid apiKey, Guid serverGuid)
         {
-            return CheckForUpdates(rid, coreServerVersion, "develop");
+            return await CheckForUpdates(rid, coreServerVersion, "develop", apiKey, serverGuid);
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
-        public ServerVersion CheckForUpdates(string rid, string coreServerVersion, string branch)
+        public async Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion, string branch, Guid apiKey, Guid serverGuid)
         {
-            using var dbContext = new CoreContext(Config);
+            await using var dbContext = new CoreContext(Config);
+            await CheckIfServerExistsAndIsValid(dbContext, apiKey, serverGuid);
+
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
+            var versions = dbContext.Versions.Where(a => a.Rid == rid && a.Branch == branch).ToList().Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
+
+            if (versions.Count > 0)
+            {
+                return versions[0];
+            }
+            return null;
+        }
+
+        [HttpGet, Route("checkForDockerUpdates/{branch}/{coreServerVersion}/{apiKey}/{serverGuid}")]
+        public async Task<ServerDockerVersion> CheckForDockerUpdates(string coreServerVersion, string branch, Guid apiKey, Guid serverGuid)
+        {
+            await using var dbContext = new CoreContext(Config);
+            await CheckIfServerExistsAndIsValid(dbContext, apiKey, serverGuid);
+
+            var versionObj = new Version(coreServerVersion);
+            var versions = dbContext.DockerVersions.ToList().Where(a => a.Branch == branch).ToList().Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
 
             if (versions.Count > 0)
             {

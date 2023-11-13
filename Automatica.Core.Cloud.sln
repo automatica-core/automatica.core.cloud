@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatica.Core.Cloud.WebAp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatica.Core.Cloud.LicenseManager", "Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj", "{99AD4799-B1BE-487F-B9BB-388AD4B95316}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Automatica.Core.Cloud.RemoteControl", "Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj", "{8EF5E910-D79B-4D36-927E-A28F5FDD63FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Automatica.Core.Cloud.RemoteControl", "Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj", "{8EF5E910-D79B-4D36-927E-A28F5FDD63FD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Automatica.Core.Cloud.TTS", "Automatica.Core.Cloud.TTS\Automatica.Core.Cloud.TTS.csproj", "{B6445FE7-534E-44D3-AFBF-E3C3C20CE3C8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{8EF5E910-D79B-4D36-927E-A28F5FDD63FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8EF5E910-D79B-4D36-927E-A28F5FDD63FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8EF5E910-D79B-4D36-927E-A28F5FDD63FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6445FE7-534E-44D3-AFBF-E3C3C20CE3C8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6445FE7-534E-44D3-AFBF-E3C3C20CE3C8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6445FE7-534E-44D3-AFBF-E3C3C20CE3C8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6445FE7-534E-44D3-AFBF-E3C3C20CE3C8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

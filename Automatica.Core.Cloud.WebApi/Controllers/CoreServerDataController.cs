@@ -53,7 +53,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         public string Body { get; set; }
     }
 
-    [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorization, ApiVersion("1.0")]
+    [AllowAnonymous, Route("webapi/v1/coreServerData"), ServerApiKeyAuthorization, ApiVersion("1.0")]
     public class CoreServerDataController : AzureStorageController
     {
 
@@ -157,7 +157,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
-        public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
+        public IEnumerable<Plugin>    GetAvailablePlugins(string coreServerVersion)
         {
             var versionObj = new Version(coreServerVersion);
             if (versionObj >= new Version(0, 6))

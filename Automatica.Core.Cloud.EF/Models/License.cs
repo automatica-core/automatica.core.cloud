@@ -7,7 +7,8 @@ namespace Automatica.Core.Cloud.EF.Models
         public Guid ObjId { get; set; }
 
         public Guid This2CoreServer { get; set; }
-
+        
+        public DateTime ExpiresAt { get; set; }
         public string LicenseKey { get; set; }
 
         public Guid This2VersionKey { get; set; }
@@ -23,6 +24,9 @@ namespace Automatica.Core.Cloud.EF.Models
         public int MaxRemoteTunnels { get; set; }
 
         public long MaxRecordingDataPoints { get; set; }
+        public int MaxSatellites { get; set; }
+
+        public bool AllowTextToSpeech { get; set; }
 
         public CoreServer This2CoreServerNavigation { get; set; }
 

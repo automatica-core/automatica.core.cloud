@@ -22,7 +22,8 @@ namespace Automatica.Core.Cloud.WebApi.Update
             {
                 File.Delete(path);
             }
-            using (var fileStream = File.Create(path))
+
+            await using (var fileStream = File.Create(path))
             {
                 await file.CopyToAsync(fileStream);
             }
@@ -115,7 +116,7 @@ namespace Automatica.Core.Cloud.WebApi.Update
                 {
                     dbContext.Plugins.Update(version);
                 }
-                dbContext.SaveChanges();
+                await dbContext.SaveChangesAsync();
             }
             return manifest;
         }
@@ -135,9 +136,10 @@ namespace Automatica.Core.Cloud.WebApi.Update
             {
                 File.Delete(path);
             }
-            using (var fileStream = File.Create(path))
+
+            await using (var fileStream = File.Create(path))
             {
-                myFile.CopyTo(fileStream);
+                await myFile.CopyToAsync(fileStream);
             }
 
             if (!Common.Update.Plugin.CheckPluginFile(logger, path, false))
@@ -145,7 +147,7 @@ namespace Automatica.Core.Cloud.WebApi.Update
                 return false;
             }
 
-            using (var fileStream = File.OpenRead(path))
+            await using (var fileStream = File.OpenRead(path))
             {
                 await blob.UploadFromStreamAsync(fileStream);
             }

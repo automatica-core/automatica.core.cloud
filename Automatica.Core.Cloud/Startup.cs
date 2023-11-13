@@ -20,6 +20,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using Automatica.Core.Cloud.RemoteControl;
+using Automatica.Core.Cloud.TTS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Automatica.Core.Model.Models.User;
 using Microsoft.OpenApi.Models;
@@ -124,6 +125,8 @@ namespace Automatica.Core.Cloud
                 a.CNameTarget = "dev.automaticaremote.com";
                 a.CNamePrefix = "dev";
             });
+
+            services.AddTextToSpeechProvider();
 
         }
 
