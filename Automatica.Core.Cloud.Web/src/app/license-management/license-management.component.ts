@@ -9,11 +9,7 @@ import { LicenseManagementService } from "./license-management.service";
 export class LicenseManagementComponent implements OnInit {
 
   constructor(private licenseService: LicenseManagementService) { }
-
-
   ngOnInit() {
 
   }
-
-
 }
