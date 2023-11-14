@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
+using System.Web;
 
 namespace Automatica.Core.Cloud.TTS
 {
@@ -33,6 +34,7 @@ namespace Automatica.Core.Cloud.TTS
             var speechConfig = SpeechConfig.FromAuthorizationToken(authToken, region);
             speechConfig.SetProperty(PropertyId.Speech_LogFilename, "speech_log.txt");
 
+            
             if (String.IsNullOrEmpty(voice))
             {
                 voice = "not set";
@@ -49,9 +51,9 @@ namespace Automatica.Core.Cloud.TTS
             var exists = await blob.ExistsAsync();
             if (exists)
             {
-                var blobText = blob.Metadata["text"];
-                var blobLanguage = blob.Metadata["language"];
-                var blobVoice = blob.Metadata["voice"];
+                var blobText = HttpUtility.HtmlEncode(blob.Metadata["text"]);
+                var blobLanguage = HttpUtility.HtmlEncode(blob.Metadata["language"]);
+                var blobVoice = HttpUtility.HtmlEncode(blob.Metadata["voice"]);
 
                 if (blobText == text && blobLanguage == language && blobVoice == voice)
                 {
@@ -59,9 +61,9 @@ namespace Automatica.Core.Cloud.TTS
                 }
                 await blob.DeleteIfExistsAsync();
             }
-            blob.Metadata["text"] = text;
-            blob.Metadata["language"] = language;
-            blob.Metadata["voice"] = voice;
+            blob.Metadata["text"] = HttpUtility.HtmlEncode(text);
+            blob.Metadata["language"] = HttpUtility.HtmlEncode(language);
+            blob.Metadata["voice"] = HttpUtility.HtmlEncode(voice);
 
             using var speechSynthesizer = new SpeechSynthesizer(speechConfig, null);
 
