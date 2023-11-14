@@ -17,20 +17,57 @@ namespace Automatica.Core.Cloud.TTS
             _logger = logger;
         }
 
-        public async Task<string> TextToSpeech(Guid serverId, Guid id, string text, string language, string voice)
+        public async Task<string> TextToSpeech(Guid serverId, Guid id, string text, string language, string voice, CancellationToken token = default)
         {
-            var speechConfig = SpeechConfig.FromEndpoint(new Uri("https://germanywestcentral.api.cognitive.microsoft.com/sts/v1.0/issuetoken"), _config["TextToSpeech:speechApiKey"]);
-            speechConfig.SpeechSynthesisVoiceName = $"{language}-{voice}";
+            var client = new HttpClient();
+            var apiKey = _config["TextToSpeech_speechApiKey"];
+            var url = _config["TextToSpeech_speechUri"]!;
+            var region = _config["TextToSpeech_speechRegion"]!;
+
+
+            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+
+            var response = await client.PostAsync(url, null, token);
+            var authToken = await response.Content.ReadAsStringAsync(token);
+
+            var speechConfig = SpeechConfig.FromAuthorizationToken(authToken, region);
+            speechConfig.SetProperty(PropertyId.Speech_LogFilename, "speech_log.txt");
+
+            if (String.IsNullOrEmpty(voice))
+            {
+                voice = "not set";
+                speechConfig.SpeechSynthesisVoiceName = $"{language}";
+            }
+            else
+            {
+                speechConfig.SpeechSynthesisVoiceName = $"{language}-{voice}";
+            }
+
+            var container = GetCloudBlobContainer();
+
+            var blob = container.GetBlockBlobReference($"{serverId}-{id}.wav");
+            var exists = await blob.ExistsAsync();
+            if (exists)
+            {
+                var blobText = blob.Metadata["text"];
+                var blobLanguage = blob.Metadata["language"];
+                var blobVoice = blob.Metadata["voice"];
+
+                if (blobText == text && blobLanguage == language && blobVoice == voice)
+                {
+                    return blob.Uri.ToString();
+                }
+                await blob.DeleteIfExistsAsync();
+            }
+            blob.Metadata["text"] = text;
+            blob.Metadata["language"] = language;
+            blob.Metadata["voice"] = voice;
 
             using var speechSynthesizer = new SpeechSynthesizer(speechConfig, null);
 
             var result = await speechSynthesizer.SpeakTextAsync(text);
             if (result.Reason == ResultReason.SynthesizingAudioCompleted)
             {
-                var container = GetCloudBlobContainer();
-
-                var blob = container.GetBlockBlobReference($"{serverId}-{id}.wav"); 
-                await blob.DeleteIfExistsAsync();
 
                 await blob.UploadFromByteArrayAsync(result.AudioData, 0, result.AudioData.Length);
                 return blob.Uri.ToString();

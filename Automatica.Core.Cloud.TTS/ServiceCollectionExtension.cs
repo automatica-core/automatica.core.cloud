@@ -9,7 +9,7 @@ namespace Automatica.Core.Cloud.TTS
         public static IServiceCollection AddTextToSpeechProvider(this IServiceCollection serviceProvider)
         {
 
-            serviceProvider.AddScoped<ITextToSpeechService, SpeechSynthesisService>();
+            serviceProvider.AddTransient<ITextToSpeechService, SpeechSynthesisService>();
             return serviceProvider;
         }
      

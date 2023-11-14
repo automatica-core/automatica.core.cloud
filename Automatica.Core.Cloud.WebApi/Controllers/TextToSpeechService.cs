@@ -34,7 +34,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpPost, Route("{apiKey}/{serverGuid}")]
-        public async Task<TextToSpeechResponse> CreateRemoteConnectPort(
+        public async Task<TextToSpeechResponse> SynthesizeText(
             [FromBody] TextToSpeechRequest request, Guid apiKey)
         {
             await using var dbContext = new CoreContext(Config);
