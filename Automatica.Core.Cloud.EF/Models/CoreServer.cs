@@ -22,8 +22,13 @@ namespace Automatica.Core.Cloud.EF.Models
         {
             get
             {
+                
                 if (!string.IsNullOrEmpty(Version))
                 {
+                    if (Version.Contains("+"))
+                    {
+                        return new Version(Version.Split("+")[0]);
+                    }
                     return new Version(Version);
                 }
                 return null;

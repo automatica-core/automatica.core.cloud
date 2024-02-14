@@ -24,6 +24,13 @@ export class LicenseManagementService extends BaseFormService<License> {
         };
     }
 
+    copyFrom(license: License ){
+        let newItem = structuredClone(license);
+        newItem.objId = uuid();
+        newItem.isNewObject = true;
+        return newItem;
+    }
+
 
     delete(objId: string): Promise<License> {
         return super.call<License>(() => this.licenseService._delete(objId, "1", "response").toPromise());

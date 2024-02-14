@@ -21,6 +21,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     public class TextToSpeechResponse
     {
         public string Url { get; set; }
+        public TimeSpan AudioDuration { get; set; }
     }
 
     [AllowAnonymous, Route("webapi/v{version:apiVersion}/tts"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
@@ -51,8 +52,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
            
             return new TextToSpeechResponse
             {
-                Url = retUrl
+                Url = retUrl.Uri,
+                AudioDuration = retUrl.AudioDuration
             };
         }
+
     }
 }

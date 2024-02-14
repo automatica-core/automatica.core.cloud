@@ -6,13 +6,13 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Automatica.Core.Cloud.RemoteControl;
+using Azure;
+using Azure.Communication.Email;
 using Microsoft.EntityFrameworkCore;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 using ServerVersion = Automatica.Core.Cloud.EF.Models.ServerVersion;
+using Polly;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -21,10 +21,12 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
     public class CoreServerDataControllerV2 : AzureStorageController
     {
         private readonly IDnsManager _dnsManager;
+        private readonly EmailClient _emailClient;
 
-        public CoreServerDataControllerV2(IConfiguration config, CoreContext context, IDnsManager dnsManager) : base(config)
+        public CoreServerDataControllerV2(IConfiguration config, CoreContext context, IDnsManager dnsManager, EmailClient emailClient) : base(config)
         {
             _dnsManager = dnsManager;
+            _emailClient = emailClient;
         }
 
         [HttpGet, Route("checkLicense/{apiKey}/{serverGuid}")]
@@ -224,30 +226,28 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpPost, Route("sendMail/{apiKey}/{serverGuid}")]
         public async Task<string> SendMail([FromBody] EmailData emailData, Guid apiKey)
         {
-            var msg = new SendGridMessage();
+            await using var dbContext = new CoreContext(Config);
 
-            msg.SetFrom(new EmailAddress("cloud@automaticacore.com", "Automatica.Core"));
+            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
+
+            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
+
+            if (license == null)
+            {
+                throw new ArgumentException("No license or invalid license found!");
+            }
 
             foreach (var to in emailData.To)
             {
-                msg.AddTo(new EmailAddress(to));
+                await _emailClient.SendAsync(
+                    WaitUntil.Started,
+                    senderAddress: "cloud@automaticacore.com",
+                    recipientAddress: to,
+                    subject: emailData.Subject,
+                    htmlContent: emailData.Body);
             }
 
-            msg.SetSubject(emailData.Subject);
-            msg.AddContent(MimeType.Text, emailData.Body);
-
-            var sendGridApiKey = Config.GetSection("SENDGRID_API_KEY").Value;
-            var client = new SendGridClient(sendGridApiKey);
-
-            var response = await client.SendEmailAsync(msg);
-
-            if (response.StatusCode == HttpStatusCode.Accepted)
-            {
-                return "{\"Result\": true}";
-            }
-
-            return "{\"Result\": false}";
-
+            return "{\"Result\": true}";
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}/{serverGuid}")]

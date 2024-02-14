@@ -2,7 +2,7 @@
   <ng-template #template let-item>
 
     <core-cloud-editor [title]="'COMMON.SERVERS.SERVER'">
-      <dx-select-box (onValueChanged)="serverChaned($event)" [items]="servers" [value]="item.this2CoreServer"
+      <dx-select-box (onValueChanged)="serverChanged($event)" [items]="servers" [value]="item.this2CoreServer"
         valueExpr="objId" displayExpr="serverName" [readOnly]="!item.isNewObject"></dx-select-box>
     </core-cloud-editor>
 

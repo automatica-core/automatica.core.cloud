@@ -1,5 +1,6 @@
 using System;
 using Automatica.Core.Cloud.EF.Helper;
+using Docker.DotNet.Models;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
@@ -14,9 +15,8 @@ namespace Automatica.Core.Cloud
             {
                 var host = CreateWebHostBuilder(args).Build();
                 host.Services.Migrate();
-
+                //
                 host.Run();
-
             }
             catch (Exception e)
             {

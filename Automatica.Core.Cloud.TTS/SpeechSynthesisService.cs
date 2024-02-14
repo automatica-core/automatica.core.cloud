@@ -18,7 +18,7 @@ namespace Automatica.Core.Cloud.TTS
             _logger = logger;
         }
 
-        public async Task<string> TextToSpeech(Guid serverId, Guid id, string text, string language, string voice, CancellationToken token = default)
+        public async Task<SpeechSynthesizeResponse> TextToSpeech(Guid serverId, Guid id, string text, string language, string voice, CancellationToken token = default)
         {
             var client = new HttpClient();
             var apiKey = _config["TextToSpeech_speechApiKey"];
@@ -55,10 +55,19 @@ namespace Automatica.Core.Cloud.TTS
                 var blobLanguage = HttpUtility.HtmlEncode(blob.Metadata["language"]);
                 var blobVoice = HttpUtility.HtmlEncode(blob.Metadata["voice"]);
 
-                if (blobText == text && blobLanguage == language && blobVoice == voice)
+                if (blob.Metadata.TryGetValue("audioLength", out var audioLength))
                 {
-                    return blob.Uri.ToString();
+                    var blobLength = TimeSpan.Parse(HttpUtility.HtmlEncode(audioLength));
+                    if (blobText == text && blobLanguage == language && blobVoice == voice)
+                    {
+                        return new SpeechSynthesizeResponse
+                        {
+                            Uri = blob.Uri.ToString(),
+                            AudioDuration = blobLength
+                        };
+                    }
                 }
+
                 await blob.DeleteIfExistsAsync();
             }
             blob.Metadata["text"] = HttpUtility.HtmlEncode(text);
@@ -70,9 +79,13 @@ namespace Automatica.Core.Cloud.TTS
             var result = await speechSynthesizer.SpeakTextAsync(text);
             if (result.Reason == ResultReason.SynthesizingAudioCompleted)
             {
-
+                blob.Metadata["audioLength"] = result.AudioDuration.ToString(); 
                 await blob.UploadFromByteArrayAsync(result.AudioData, 0, result.AudioData.Length);
-                return blob.Uri.ToString();
+                return new SpeechSynthesizeResponse
+                {
+                    Uri = blob.Uri.ToString(),
+                    AudioDuration = result.AudioDuration
+                };
 
             }
             if (result.Reason == ResultReason.Canceled)

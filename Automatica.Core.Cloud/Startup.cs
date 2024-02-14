@@ -23,6 +23,7 @@ using Automatica.Core.Cloud.RemoteControl;
 using Automatica.Core.Cloud.TTS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Automatica.Core.Model.Models.User;
+using Azure.Communication.Email;
 using Microsoft.OpenApi.Models;
 
 namespace Automatica.Core.Cloud
@@ -127,6 +128,8 @@ namespace Automatica.Core.Cloud
             });
 
             services.AddTextToSpeechProvider();
+
+            services.AddSingleton(new EmailClient(Configuration.GetConnectionString("AutomaticaAzureEmailCommunication")));
 
         }
 

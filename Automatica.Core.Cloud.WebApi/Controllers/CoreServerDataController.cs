@@ -6,10 +6,6 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using SendGrid;
-using SendGrid.Helpers.Mail;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
@@ -91,44 +87,6 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
             dbContext.Update(server);
             dbContext.SaveChanges();
-        }
-
-        [HttpPost, Route("sendMail/{apiKey}")]
-        public async Task<string> SendMail([FromBody] EmailData emailData, Guid apiKey)
-        {
-            using (var dbContext = new CoreContext(Config))
-            {
-                var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-                if (server == null || server.VersionObj >= new Version(0, 6))
-                {
-                    return "{\"Result\": false}";
-                }
-            }
-
-            var msg = new SendGridMessage();
-
-            msg.SetFrom(new EmailAddress("cloud@automaticacore.com", "Automatica.Core"));
-
-            foreach (var to in emailData.To)
-            {
-                msg.AddTo(new EmailAddress(to));
-            }
-
-            msg.SetSubject(emailData.Subject);
-            msg.AddContent(MimeType.Text, emailData.Body);
-
-            var sendGridApiKey = Config.GetSection("SENDGRID_API_KEY").Value;
-            var client = new SendGridClient(sendGridApiKey);
-
-            var response = await client.SendEmailAsync(msg);
-
-            if (response.StatusCode == HttpStatusCode.Accepted)
-            {
-                return "{\"Result\": true}";
-            }
-
-            return "{\"Result\": false}";
-
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}")]
