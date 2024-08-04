@@ -104,3 +104,6 @@ variable "server_type" {
   default = "Standard_B2s"
 }
 
+variable "frontdoor_sku" {
+  default = "Standard_AzureFrontDoor"
+}

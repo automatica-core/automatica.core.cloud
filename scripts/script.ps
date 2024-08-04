@@ -1,0 +1,5 @@
+//https://thomasvanlaere.com/posts/2019/11/key-vault-for-azure-virtual-machines-extension/
+
+$content = [IO.File]::ReadAllText(".\settings.json")
+
+Set-AzVMExtension -ResourceGroupName $vm.ResourceGroupName -Location $vm.Location -VMName $vm.Name -Name "KeyVaultForLinux" -Type "KeyVaultForLinux" -Publisher "Microsoft.Azure.KeyVault" -TypeHandlerVersion "3.0" -SettingString $conten

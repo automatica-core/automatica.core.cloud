@@ -86,6 +86,11 @@ data "azurerm_key_vault_secret" "public_key" {
 
 data "template_file" "cloud_init" {
   template   = file("${path.root}/cloud-init/cloud-init.yml")
+   
+  vars = {
+    domain               = "${var.environment}.automaticaremote"
+    domain_ending        = "com"
+  }
 }
 
 
@@ -98,6 +103,11 @@ data "template_file" "frps" {
     subdomain               = "${var.environment}.automaticaremote.com"
   }
 }
+
+data "template_file" "nginx" {
+  template   = file("${path.root}/templates/nginx.tpl")
+}
+
 
 data "template_file" "frps_service" {
   template   = file("${path.root}/templates/frps.service.tpl")
@@ -146,6 +156,11 @@ resource "azurerm_linux_virtual_machine" "frps_node" {
     provisioner "file" {
       content = data.template_file.frps_service.rendered
       destination = "/home/frps/frps.service"
+    }
+
+    provisioner "file" {
+      content = data.template_file.nginx.rendered
+      destination = "/home/frps/nginx"
     }
 
     custom_data = base64encode(data.template_file.cloud_init.rendered)

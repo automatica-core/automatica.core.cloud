@@ -1,0 +1,17 @@
+{   
+   "secretsManagementSettings": {
+   "requireInitialSync": true,
+   "pollingIntervalInS": "3600",
+   "linkOnRenewal": true,
+   "observedCertificates":
+   [
+      {
+          "url": "<secret kvl url>",
+          "certificateStoreLocation": "/etc/nginx/certs/"
+      }
+   ]},
+   "authenticationSettings": {
+				"msiEndpoint": "http://169.254.169.254/metadata/identity",
+                "msiClientId": "<managedidentity>"
+   }      
+}
