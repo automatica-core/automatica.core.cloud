@@ -87,10 +87,6 @@ data "azurerm_key_vault_secret" "public_key" {
 data "template_file" "cloud_init" {
   template   = file("${path.root}/cloud-init/cloud-init.yml")
    
-  vars = {
-    domain               = "${var.environment}.automaticaremote"
-    domain_ending        = "com"
-  }
 }
 
 
@@ -106,6 +102,11 @@ data "template_file" "frps" {
 
 data "template_file" "nginx" {
   template   = file("${path.root}/templates/nginx.tpl")
+
+  vars = {
+    domain               = "${var.environment}.automaticaremote"
+    domain_ending        = "com"
+  }
 }
 
 
