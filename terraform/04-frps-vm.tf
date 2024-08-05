@@ -105,7 +105,7 @@ data "template_file" "nginx" {
 
   vars = {
     domain               = "${var.environment}.automaticaremote"
-    domain_ending        = "com"
+    domain_end        = "com"
   }
 }
 
