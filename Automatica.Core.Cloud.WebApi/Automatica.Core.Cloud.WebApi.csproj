@@ -1,19 +1,17 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-  </PropertyGroup>
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Automatica.Core.Common.Update" Version="8.1.0.1907" />
-    <PackageReference Include="Azure.Communication.Email" Version="1.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Authorization" Version="10.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
-    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.17.0" />
-    <PackageReference Include="morelinq" Version="4.4.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
-    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Asp.Versioning.Mvc" />
+    <PackageReference Include="Automatica.Core.Common.Update" />
+    <PackageReference Include="Azure.Communication.Email" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,5 +19,9 @@
     <ProjectReference Include="..\Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.TTS\Automatica.Core.Cloud.TTS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Automatica.Core.Cloud.Tests" />
   </ItemGroup>
 </Project>

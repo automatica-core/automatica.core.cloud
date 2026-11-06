@@ -1,44 +1,22 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <UserSecretsId>28068732-66b3-4cad-acf5-75dfec267e33</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Swagger\swagger.index.html" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Swagger\swagger.index.html" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Azure.Communication.Email" Version="1.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.6" />
-    <PackageReference Include="Microsoft.AspNetCore.AzureAppServicesIntegration" Version="10.0.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.6">
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" />
+    <PackageReference Include="Azure.Identity" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="10.0.6" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.7" />
-    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj" />
-    <ProjectReference Include="..\Automatica.Core.Cloud.LicenseManager\Automatica.Core.Cloud.LicenseManager.csproj" />
-    <ProjectReference Include="..\Automatica.Core.Cloud.RemoteControl\Automatica.Core.Cloud.RemoteControl.csproj" />
-    <ProjectReference Include="..\Automatica.Core.Cloud.TTS\Automatica.Core.Cloud.TTS.csproj" />
     <ProjectReference Include="..\Automatica.Core.Cloud.WebApi\Automatica.Core.Cloud.WebApi.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <WCFMetadata Include="Connected Services" />
   </ItemGroup>
 
   <ItemGroup>
@@ -47,5 +25,7 @@
     </Content>
   </ItemGroup>
 
-
+  <ItemGroup>
+    <InternalsVisibleTo Include="Automatica.Core.Cloud.Tests" />
+  </ItemGroup>
 </Project>

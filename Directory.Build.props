@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <!-- AV0014: core-facing controllers intentionally have no [ApiController] to keep their binding behaviour -->
+    <NoWarn>$(NoWarn);AV0014</NoWarn>
+  </PropertyGroup>
+</Project>
