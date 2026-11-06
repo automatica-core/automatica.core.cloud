@@ -1,0 +1,105 @@
+# Automatica.Core.Cloud build + deploy (Azure DevOps).
+# NOT set up in DevOps yet. Setup steps: terraform/README.md -> "Azure DevOps pipeline".
+#
+# develop -> dev, master -> prod. Each environment: terraform plan -> (approval on the DevOps environment) ->
+# terraform apply -> deploy the app package. The shared stack (terraform/shared) is applied by hand only.
+
+trigger:
+  branches:
+    include: [develop, master]
+  paths:
+    exclude: ['**/*.md', docs/*]
+
+pr:
+  branches:
+    include: [develop, master]
+
+variables:
+  - name: buildConfiguration
+    value: Release
+  - name: vmImage
+    value: ubuntu-latest
+  - name: terraformVersion
+    value: 1.9.8
+  - name: webDir
+    value: Automatica.Core.Cloud.Web
+  # non-secret: names of the service connections (workload identity federation, no client secrets)
+  - name: serviceConnectionDev
+    value: automatica-cloud-dev
+  - name: serviceConnectionProd
+    value: automatica-cloud-prod
+
+stages:
+  - stage: Build
+    jobs:
+      - job: Build
+        pool:
+          vmImage: $(vmImage)
+        steps:
+          - checkout: self
+
+          - task: UseDotNet@2
+            inputs:
+              packageType: sdk
+              version: 10.0.x
+
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+
+          - script: npm ci && npm run build -- --configuration production
+            displayName: Build frontend
+            workingDirectory: $(webDir)
+
+          - script: dotnet test Automatica.Core.Cloud.sln -c $(buildConfiguration) --logger trx --results-directory $(Agent.TempDirectory)/tests
+            displayName: Test
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: VSTest
+              testResultsFiles: $(Agent.TempDirectory)/tests/*.trx
+
+          - script: dotnet publish Automatica.Core.Cloud/Automatica.Core.Cloud.csproj -c $(buildConfiguration) -o $(Build.ArtifactStagingDirectory)/app
+            displayName: Publish app
+
+          - task: ArchiveFiles@2
+            inputs:
+              rootFolderOrFile: $(Build.ArtifactStagingDirectory)/app
+              includeRootFolder: false
+              archiveType: zip
+              archiveFile: $(Build.ArtifactStagingDirectory)/automatica-cloud.zip
+
+          - publish: $(Build.ArtifactStagingDirectory)/automatica-cloud.zip
+            artifact: app
+
+      - job: Terraform
+        pool:
+          vmImage: $(vmImage)
+        steps:
+          - checkout: self
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(terraformVersion)
+          - script: |
+              set -e
+              terraform -chdir=terraform fmt -check -recursive
+              for stack in shared env; do
+                terraform -chdir=terraform/$stack init -backend=false -input=false
+                terraform -chdir=terraform/$stack validate
+              done
+            displayName: terraform fmt / validate
+          - publish: terraform
+            artifact: terraform
+
+  - template: templates/deploy-env.yml
+    parameters:
+      environment: dev
+      branch: refs/heads/develop
+      serviceConnection: $(serviceConnectionDev)
+
+  - template: templates/deploy-env.yml
+    parameters:
+      environment: prod
+      branch: refs/heads/master
+      serviceConnection: $(serviceConnectionProd)
