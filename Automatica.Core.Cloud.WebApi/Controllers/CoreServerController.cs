@@ -8,6 +8,7 @@ using Automatica.Core.Cloud.WebApi.Authentication;
 using Automatica.Core.Cloud.WebApi.Dtos;
 using Automatica.Core.Cloud.WebApi.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -231,7 +232,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                 CreatedAt = DateTime.UtcNow
             };
             _db.MailRecipients.Add(recipient);
-            await SendVerificationAsync(server, recipient);
+            if (!await TrySendVerificationAsync(server, recipient))
+            {
+                return MailNotSent();
+            }
             await _db.SaveChangesAsync();
             return MailRecipientDto.From(recipient);
         }
@@ -249,7 +253,10 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 return NoContent();
             }
-            await SendVerificationAsync(server, recipient);
+            if (!await TrySendVerificationAsync(server, recipient))
+            {
+                return MailNotSent();
+            }
             await _db.SaveChangesAsync();
             return NoContent();
         }
@@ -266,6 +273,23 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             _db.MailRecipients.Remove(recipient);
             await _db.SaveChangesAsync();
             return NoContent();
+        }
+
+        private ObjectResult MailNotSent() => StatusCode(StatusCodes.Status502BadGateway, new { error = "mail-could-not-be-sent" });
+
+        /// <summary>Nothing is stored when the mail cannot go out, so the user can simply try again.</summary>
+        private async Task<bool> TrySendVerificationAsync(CoreServer server, MailRecipient recipient)
+        {
+            try
+            {
+                await SendVerificationAsync(server, recipient);
+                return true;
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                _logger.LogError(e, "Could not send the verification mail for core server {ServerId}", server.ObjId);
+                return false;
+            }
         }
 
         private async Task SendVerificationAsync(CoreServer server, MailRecipient recipient)
