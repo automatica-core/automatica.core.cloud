@@ -35,7 +35,7 @@ frps = {
   cert_name                     = "wildcard-dev-automaticaremote-com"
   frp_version                   = "0.58.1" # same protocol line as the frpc 0.58.0 the cores ship
   frp_sha256                    = "5bd9f8860b580ed9c42eed1c99dfaa03b196d0f68007dca088f6c098d498430d"
-  token_auth_enabled            = false # true once the cores send FRPS_TOKEN (cloud returns it as frpsToken)
+  token_auth_enabled            = false # true once the cores send FRPS_TOKEN (cloud returns it as frpToken)
   require_api_key_meta          = false # true once the cores send meta_apikey
 }
 

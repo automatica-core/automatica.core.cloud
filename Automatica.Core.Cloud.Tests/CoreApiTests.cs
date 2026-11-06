@@ -37,6 +37,31 @@ namespace Automatica.Core.Cloud.Tests
         }
 
         [Fact]
+        public async Task Headers_win_over_the_path_segments()
+        {
+            var owner = await Owner("header-owner");
+            var (server, key) = await _factory.CreateServerAsync(owner.ObjId);
+            var client = _factory.Client();
+
+            HttpRequestMessage Ping(string path, Guid? headerKey, Guid? headerGuid)
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, path);
+                if (headerKey.HasValue) request.Headers.Add("X-Automatica-ApiKey", headerKey.Value.ToString());
+                if (headerGuid.HasValue) request.Headers.Add("X-Automatica-ServerGuid", headerGuid.Value.ToString());
+                return request;
+            }
+
+            // path segments are placeholders, the headers authenticate
+            Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Ping("/webapi/v2/coreServerData/ping/-/-", key, server.ServerGuid))).StatusCode);
+            // a correct key in the path does not help when the header carries a wrong one
+            Assert.Equal(HttpStatusCode.Forbidden,
+                (await client.SendAsync(Ping($"/webapi/v2/coreServerData/ping/{key}/{server.ServerGuid}", Guid.NewGuid(), server.ServerGuid))).StatusCode);
+            // key from the header, guid from the path
+            Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Ping($"/webapi/v2/coreServerData/ping/-/{server.ServerGuid}", key, null))).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(Ping("/webapi/v1/coreServerData/checkLicense/-", key, null))).StatusCode);
+        }
+
+        [Fact]
         public async Task V1_accepts_the_key_alone()
         {
             var owner = await Owner("v1-owner");
@@ -122,7 +147,7 @@ namespace Automatica.Core.Cloud.Tests
             Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
             var body = await ok.Content.ReadFromJsonAsync<JsonElement>(CloudFactory.Json);
             Assert.Equal("myhome", body.GetProperty("subDomain").GetString());
-            Assert.Equal(CloudFactory.FrpsToken, body.GetProperty("frpsToken").GetString());
+            Assert.Equal(CloudFactory.FrpsToken, body.GetProperty("frpToken").GetString());
         }
 
         [Fact]

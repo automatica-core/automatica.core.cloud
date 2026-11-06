@@ -76,15 +76,10 @@ resource "azurerm_linux_web_app" "this" {
     value = var.sql_connection_string
   }
 
+  # no http_logs: core requests carry the api key in the url path (v1/v2 routes), so access logs would store it
   logs {
     detailed_error_messages = false
     failed_request_tracing  = false
-    http_logs {
-      file_system {
-        retention_in_days = 7
-        retention_in_mb   = 35
-      }
-    }
   }
 
   lifecycle {

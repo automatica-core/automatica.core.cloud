@@ -10,7 +10,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Automatica.Core.Cloud.WebApi.Authentication
 {
     /// <summary>
-    /// Authenticates an on-prem core by the {apiKey} (and, for v2, {serverGuid}) route values.
+    /// Authenticates an on-prem core by the {apiKey} (and, for v2, {serverGuid}) route values, or by the
+    /// X-Automatica-ApiKey / X-Automatica-ServerGuid headers, which win when both are sent.
     /// The key is looked up by its SHA-256 and compared in constant time; the plaintext key is never queried.
     /// </summary>
     public sealed class CoreServerApiKeyAttribute : TypeFilterAttribute
@@ -24,6 +25,8 @@ namespace Automatica.Core.Cloud.WebApi.Authentication
     public sealed class CoreServerApiKeyFilter : IAsyncAuthorizationFilter
     {
         public const string ItemKey = "automatica.coreServer";
+        public const string ApiKeyHeader = "X-Automatica-ApiKey";
+        public const string ServerGuidHeader = "X-Automatica-ServerGuid";
 
         private readonly CoreContext _db;
         private readonly bool _requireServerGuid;
@@ -48,14 +51,13 @@ namespace Automatica.Core.Cloud.WebApi.Authentication
 
         internal static async Task<CoreServer> AuthenticateAsync(CoreContext db, HttpContext httpContext, bool requireServerGuid)
         {
-            var values = httpContext.Request.RouteValues;
-            if (!Guid.TryParse(values["apiKey"]?.ToString(), out var apiKey) || apiKey == Guid.Empty)
+            if (!Guid.TryParse(Read(httpContext, ApiKeyHeader, "apiKey"), out var apiKey) || apiKey == Guid.Empty)
             {
                 return null;
             }
 
             Guid serverGuid = Guid.Empty;
-            if (requireServerGuid && !Guid.TryParse(values["serverGuid"]?.ToString(), out serverGuid))
+            if (requireServerGuid && !Guid.TryParse(Read(httpContext, ServerGuidHeader, "serverGuid"), out serverGuid))
             {
                 return null;
             }
@@ -64,6 +66,13 @@ namespace Automatica.Core.Cloud.WebApi.Authentication
             var candidates = await db.CoreServers.Where(a => a.ApiKeyHash == hash).ToListAsync(httpContext.RequestAborted);
 
             return candidates.FirstOrDefault(a => SecretHashing.FixedTimeEquals(a.ApiKeyHash, hash) && (!requireServerGuid || a.ServerGuid == serverGuid));
+        }
+
+        /// <summary>The header wins over the route value, so a later core can drop the key from the path.</summary>
+        private static string Read(HttpContext httpContext, string header, string routeValue)
+        {
+            var fromHeader = httpContext.Request.Headers[header].ToString();
+            return !string.IsNullOrWhiteSpace(fromHeader) ? fromHeader.Trim() : httpContext.Request.RouteValues[routeValue]?.ToString();
         }
     }
 

@@ -37,7 +37,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
 
         /// <summary>Additive: the frps auth token, for cores that support frps token auth.</summary>
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-        public string FrpsToken { get; set; }
+        public string FrpToken { get; set; }
     }
 
     public class SayHelloData
