@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 
 namespace Automatica.Core.Cloud.EF.Models
 {
@@ -18,25 +15,13 @@ namespace Automatica.Core.Cloud.EF.Models
         public virtual DbSet<License> Licenses { get; set; }
         public virtual DbSet<RemoteControlPort> RemoteControlPorts { get; set; }
         public virtual DbSet<RemoteControlSubDomain> RemoteControlSubDomains { get; set; }
-        public IConfiguration Config { get; }
 
-        public CoreContext(IConfiguration config)
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+        public virtual DbSet<DeployKey> DeployKeys { get; set; }
+        public virtual DbSet<MailRecipient> MailRecipients { get; set; }
+
+        public CoreContext(DbContextOptions<CoreContext> options) : base(options)
         {
-            Config = config;
-        }
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer(Config.GetConnectionString("AutomaticaCoreCloudSql"), (options) =>
-                {
-                    options.EnableRetryOnFailure();
-                });
-                optionsBuilder.LogTo(m => Debug.WriteLine(m), new[] { DbLoggerCategory.Database.Name },
-                    LogLevel.Information);
-
-
-            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -77,8 +62,10 @@ namespace Automatica.Core.Cloud.EF.Models
             {
                 entity.HasKey(a => a.ObjId);
                 entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
-                entity.Property(a => a.ApiKey).ValueGeneratedOnAdd();
                 entity.Property(a => a.Version).HasDefaultValue("0.0.0.0");
+                entity.Property(a => a.ApiKeyHash).HasMaxLength(32);
+                entity.HasIndex(a => a.ApiKeyHash);
+                entity.HasIndex(a => a.ServerGuid);
 
                 entity.HasOne(a => a.This2UserNavigation).WithMany().HasForeignKey(a => a.This2User);
             });
@@ -110,8 +97,47 @@ namespace Automatica.Core.Cloud.EF.Models
                 entity.HasOne(a => a.This2CoreServerNavigation).WithMany().HasForeignKey(a => a.This2CoreServer);
             });
 
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasKey(a => a.ObjId);
+                entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.TokenHash).HasMaxLength(32).IsRequired();
+                entity.HasIndex(a => a.TokenHash).IsUnique();
+                entity.HasIndex(a => a.FamilyId);
+                entity.Property(a => a.CreatedByIp).HasMaxLength(64);
+                entity.Property(a => a.SecurityStamp).HasMaxLength(64);
+                entity.HasOne(a => a.This2UserNavigation).WithMany().HasForeignKey(a => a.This2User).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DeployKey>(entity =>
+            {
+                entity.HasKey(a => a.ObjId);
+                entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.Name).HasMaxLength(100).IsRequired();
+                entity.Property(a => a.KeyHash).HasMaxLength(32).IsRequired();
+                entity.HasIndex(a => a.KeyHash).IsUnique();
+                entity.Property(a => a.KeyPrefix).HasMaxLength(16);
+                entity.Property(a => a.AllowedBranches).HasMaxLength(200);
+                entity.Property(a => a.LastUsedIp).HasMaxLength(64);
+                entity.HasOne(a => a.This2UserNavigation).WithMany().HasForeignKey(a => a.This2User).OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<MailRecipient>(entity =>
+            {
+                entity.HasKey(a => a.ObjId);
+                entity.Property(a => a.ObjId).ValueGeneratedOnAdd();
+                entity.Property(a => a.Email).HasMaxLength(254).IsRequired();
+                entity.Property(a => a.VerificationTokenHash).HasMaxLength(32);
+                entity.HasIndex(a => new { a.This2CoreServer, a.Email }).IsUnique();
+                entity.HasOne(a => a.This2CoreServerNavigation).WithMany().HasForeignKey(a => a.This2CoreServer).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.Property(a => a.SecurityStamp).HasMaxLength(64);
+            });
+
             base.OnModelCreating(modelBuilder);
         }
-
     }
 }

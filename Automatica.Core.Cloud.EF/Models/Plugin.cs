@@ -72,6 +72,7 @@ namespace Automatica.Core.Cloud.EF.Models
 
         public bool IsPublic { get; set; }
         public bool IsPrerelease { get; set; }
+        [Newtonsoft.Json.JsonIgnore]
         public User This2UserNavigation { get; internal set; }
         public IList<PluginFeature> LicenseFeatures { get; set; }
     }
