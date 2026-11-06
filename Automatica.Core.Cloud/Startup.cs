@@ -13,9 +13,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Swashbuckle.AspNetCore.Swagger;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -24,7 +22,6 @@ using Automatica.Core.Cloud.TTS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Automatica.Core.Model.Models.User;
 using Azure.Communication.Email;
-using Microsoft.OpenApi.Models;
 
 namespace Automatica.Core.Cloud
 {
@@ -97,19 +94,19 @@ namespace Automatica.Core.Cloud
                 x.ValueCountLimit = int.MaxValue;
             });
 
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Automatica.Core.Cloud", Version = "v1" });
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\", provide value: \"Bearer {token}\"",
-                    Name = "Authorization",
+            //services.AddSwaggerGen(c =>
+            //{
+            //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Automatica.Core.Cloud", Version = "v1" });
+            //    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            //    {
+            //        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\", provide value: \"Bearer {token}\"",
+            //        Name = "Authorization",
                     
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.ApiKey
-                });
+            //        In = ParameterLocation.Header,
+            //        Type = SecuritySchemeType.ApiKey
+            //    });
 
-            });
+            //});
             services.AddApiVersioning(o =>
                 {
                     o.AssumeDefaultVersionWhenUnspecified = true;

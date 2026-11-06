@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Automatica.Core.Cloud.EF\Automatica.Core.Cloud.EF.csproj" />
 
-    <PackageReference Include="Standard.Licensing" Version="1.1.7" />
+    <PackageReference Include="Standard.Licensing" Version="1.2.2" />
   </ItemGroup>
 
 </Project>
