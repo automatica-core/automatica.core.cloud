@@ -147,7 +147,7 @@ namespace Automatica.Core.Cloud.Tests
             Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
             var body = await ok.Content.ReadFromJsonAsync<JsonElement>(CloudFactory.Json);
             Assert.Equal("myhome", body.GetProperty("subDomain").GetString());
-            Assert.Equal(CloudFactory.FrpsToken, body.GetProperty("frpToken").GetString());
+            Assert.Equal(CloudFactory.FrpsToken, body.GetProperty("frpsToken").GetString());
         }
 
         [Fact]

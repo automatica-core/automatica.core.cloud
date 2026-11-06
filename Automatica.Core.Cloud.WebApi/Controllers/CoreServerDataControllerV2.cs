@@ -172,7 +172,7 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             {
                 TunnelUrl = targetUrl.url,
                 SubDomain = target,
-                FrpToken = string.IsNullOrEmpty(_config["Frps:Token"]) ? null : _config["Frps:Token"]
+                FrpsToken = string.IsNullOrEmpty(_config["Frps:Token"]) ? null : _config["Frps:Token"]
             };
 
             if (!pluginGuid.HasValue)

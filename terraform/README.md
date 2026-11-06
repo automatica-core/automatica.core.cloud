@@ -161,7 +161,7 @@ az vm run-command invoke -g rg-automatica-cloud-dev -n vm-frps-dev --command-id 
 
 ### 7. frps token (after the cores ship it)
 
-The cloud already returns `frpToken` in the `createRemoteConnect` response. Once released cores send `token` and `meta_apikey` (see the contract note in the side-session notes), turn on enforcement:
+The cloud already returns `frpsToken` in the `createRemoteConnect` response. Once released cores send `token` and `meta_apikey` (see the contract note in the side-session notes), turn on enforcement:
 
 1. Set `frps.token_auth_enabled = true` and `frps.require_api_key_meta = true`.
 2. Apply.
