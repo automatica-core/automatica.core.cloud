@@ -1,0 +1,11 @@
+{
+  "/webapi": {
+    "target": "http://localhost:5080",
+    "secure": false,
+    "changeOrigin": false
+  },
+  "/healthz": {
+    "target": "http://localhost:5080",
+    "secure": false
+  }
+}
