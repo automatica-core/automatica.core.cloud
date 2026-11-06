@@ -1,9 +1,10 @@
-﻿using Microsoft.CognitiveServices.Speech;
+using System.Security.Cryptography;
+using System.Text;
+using Automatica.Core.Cloud.Storage;
+using Azure.Storage.Blobs.Models;
+using Microsoft.CognitiveServices.Speech;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Blob;
-using System.Web;
 
 namespace Automatica.Core.Cloud.TTS
 {
@@ -18,100 +19,84 @@ namespace Automatica.Core.Cloud.TTS
             _logger = logger;
         }
 
-        public async Task<SpeechSynthesizeResponse> TextToSpeech(Guid serverId, Guid id, string text, string language, string voice, CancellationToken token = default)
+        private string Setting(string key, string legacyKey)
         {
-            var client = new HttpClient();
-            var apiKey = _config["TextToSpeech_speechApiKey"];
-            var url = _config["TextToSpeech_speechUri"]!;
-            var region = _config["TextToSpeech_speechRegion"]!;
+            var value = _config[$"TextToSpeech:{key}"];
+            if (string.IsNullOrEmpty(value))
+            {
+                value = _config[legacyKey];
+            }
+            if (string.IsNullOrEmpty(value))
+            {
+                throw new InvalidOperationException($"TextToSpeech:{key} is not configured");
+            }
+            return value;
+        }
 
+        private static string RequestHash(string text, string language, string voice)
+        {
+            return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{language}\n{voice}\n{text}")));
+        }
 
-            client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", apiKey);
+        public async Task<SpeechSynthesizeResponse> TextToSpeech(Guid serverId, Guid id, string text, string language, string? voice, CancellationToken token = default)
+        {
+            var apiKey = Setting("ApiKey", "TextToSpeech_speechApiKey");
+            var region = Setting("Region", "TextToSpeech_speechRegion");
 
-            var response = await client.PostAsync(url, null, token);
-            var authToken = await response.Content.ReadAsStringAsync(token);
-
-            var speechConfig = SpeechConfig.FromAuthorizationToken(authToken, region);
-            speechConfig.SetProperty(PropertyId.Speech_LogFilename, "speech_log.txt");
-
-            
-            if (String.IsNullOrEmpty(voice))
+            var speechConfig = SpeechConfig.FromSubscription(apiKey, region);
+            if (string.IsNullOrEmpty(voice))
             {
                 voice = "not set";
-                speechConfig.SpeechSynthesisVoiceName = $"{language}";
+                speechConfig.SpeechSynthesisVoiceName = language;
             }
             else
             {
                 speechConfig.SpeechSynthesisVoiceName = $"{language}-{voice}";
             }
 
-            var container = GetCloudBlobContainer();
+            var container = BlobContainers.Create(_config, "AutomaticaTextToSpeechStorage", "tts");
+            var blob = container.GetBlobClient($"{serverId}-{id}.wav");
+            var requestHash = RequestHash(text, language, voice);
 
-            var blob = container.GetBlockBlobReference($"{serverId}-{id}.wav");
-            var exists = await blob.ExistsAsync();
-            if (exists)
+            if (await blob.ExistsAsync(token))
             {
-                var blobText = HttpUtility.HtmlEncode(blob.Metadata["text"]);
-                var blobLanguage = HttpUtility.HtmlEncode(blob.Metadata["language"]);
-                var blobVoice = HttpUtility.HtmlEncode(blob.Metadata["voice"]);
-
-                if (blob.Metadata.TryGetValue("audioLength", out var audioLength))
+                BlobProperties properties = await blob.GetPropertiesAsync(cancellationToken: token);
+                if (properties.Metadata.TryGetValue("requestHash", out var storedHash) && storedHash == requestHash &&
+                    properties.Metadata.TryGetValue("audioLength", out var audioLength) && TimeSpan.TryParse(audioLength, out var length))
                 {
-                    var blobLength = TimeSpan.Parse(HttpUtility.HtmlEncode(audioLength));
-                    if (blobText == text && blobLanguage == language && blobVoice == voice)
-                    {
-                        return new SpeechSynthesizeResponse
-                        {
-                            Uri = blob.Uri.ToString(),
-                            AudioDuration = blobLength
-                        };
-                    }
+                    return new SpeechSynthesizeResponse { Uri = blob.Uri.ToString(), AudioDuration = length };
                 }
 
-                await blob.DeleteIfExistsAsync();
+                await blob.DeleteIfExistsAsync(cancellationToken: token);
             }
-            blob.Metadata["text"] = HttpUtility.HtmlEncode(text);
-            blob.Metadata["language"] = HttpUtility.HtmlEncode(language);
-            blob.Metadata["voice"] = HttpUtility.HtmlEncode(voice);
 
             using var speechSynthesizer = new SpeechSynthesizer(speechConfig, null);
-
             var result = await speechSynthesizer.SpeakTextAsync(text);
+
             if (result.Reason == ResultReason.SynthesizingAudioCompleted)
             {
-                blob.Metadata["audioLength"] = result.AudioDuration.ToString(); 
-                await blob.UploadFromByteArrayAsync(result.AudioData, 0, result.AudioData.Length);
-                return new SpeechSynthesizeResponse
+                using var stream = new MemoryStream(result.AudioData);
+                await blob.UploadAsync(stream, new BlobUploadOptions
                 {
-                    Uri = blob.Uri.ToString(),
-                    AudioDuration = result.AudioDuration
-                };
+                    HttpHeaders = new BlobHttpHeaders { ContentType = "audio/wav" },
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "requestHash", requestHash },
+                        { "audioLength", result.AudioDuration.ToString() }
+                    }
+                }, token);
 
+                return new SpeechSynthesizeResponse { Uri = blob.Uri.ToString(), AudioDuration = result.AudioDuration };
             }
+
             if (result.Reason == ResultReason.Canceled)
             {
                 var cancellation = SpeechSynthesisCancellationDetails.FromResult(result);
-                _logger.LogError($"CANCELED: Reason={cancellation.Reason}");
-
-                if (cancellation.Reason == CancellationReason.Error)
-                {
-                    _logger.LogError($"CANCELED: ErrorCode={cancellation.ErrorCode}");
-                    _logger.LogError($"CANCELED: ErrorDetails=[{cancellation.ErrorDetails}]");
-                    _logger.LogError($"CANCELED: Did you update the subscription info?");
-
-                    throw new ArgumentException($"{cancellation.ErrorCode} {cancellation.ErrorDetails}");
-                }
+                _logger.LogError("Speech synthesis canceled: {Reason} {ErrorCode} {ErrorDetails}", cancellation.Reason, cancellation.ErrorCode, cancellation.ErrorDetails);
+                throw new InvalidOperationException($"Speech synthesis failed: {cancellation.ErrorCode}");
             }
 
-            throw new ArgumentException($"{result.Reason}");
-        }
-
-        protected CloudBlobContainer GetCloudBlobContainer()
-        {
-            var storageAccount = CloudStorageAccount.Parse(_config.GetConnectionString("AutomaticaTextToSpeechStorage"));
-            var blobClient = storageAccount.CreateCloudBlobClient();
-            var container = blobClient.GetContainerReference("tts");
-            return container;
+            throw new InvalidOperationException($"Speech synthesis failed: {result.Reason}");
         }
     }
 }
