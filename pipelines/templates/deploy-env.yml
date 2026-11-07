@@ -1,0 +1,87 @@
+parameters:
+  - name: environment
+    type: string
+  - name: branch
+    type: string
+  - name: serviceConnection
+    type: string
+
+stages:
+  - stage: Plan_${{ parameters.environment }}
+    displayName: Plan ${{ parameters.environment }}
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], '${{ parameters.branch }}'), ne(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - job: Plan
+        pool:
+          vmImage: $(vmImage)
+        steps:
+          - download: current
+            artifact: terraform
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: $(terraformVersion)
+          - task: AzureCLI@2
+            displayName: terraform plan
+            inputs:
+              azureSubscription: ${{ parameters.serviceConnection }}
+              scriptType: bash
+              scriptLocation: inlineScript
+              addSpnToEnvironment: true
+              workingDirectory: $(Pipeline.Workspace)/terraform/env
+              inlineScript: |
+                set -euo pipefail
+                export ARM_USE_OIDC=true ARM_OIDC_TOKEN="$idToken" ARM_CLIENT_ID="$servicePrincipalId" ARM_TENANT_ID="$tenantId"
+                terraform init -input=false -backend-config=envs/${{ parameters.environment }}.backend.hcl
+                terraform plan -input=false -lock-timeout=5m -var-file=envs/${{ parameters.environment }}.tfvars -out=tfplan
+          - publish: $(Pipeline.Workspace)/terraform/env/tfplan
+            artifact: tfplan-${{ parameters.environment }}
+
+  - stage: Deploy_${{ parameters.environment }}
+    displayName: Deploy ${{ parameters.environment }}
+    dependsOn: Plan_${{ parameters.environment }}
+    condition: succeeded()
+    jobs:
+      # approvals/checks are configured on the DevOps environment "automatica-cloud-<env>"
+      - deployment: Deploy
+        environment: automatica-cloud-${{ parameters.environment }}
+        pool:
+          vmImage: $(vmImage)
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: terraform
+                - download: current
+                  artifact: tfplan-${{ parameters.environment }}
+                - download: current
+                  artifact: app
+                - task: TerraformInstaller@1
+                  inputs:
+                    terraformVersion: $(terraformVersion)
+                - task: AzureCLI@2
+                  name: tf
+                  displayName: terraform apply
+                  inputs:
+                    azureSubscription: ${{ parameters.serviceConnection }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    addSpnToEnvironment: true
+                    workingDirectory: $(Pipeline.Workspace)/terraform/env
+                    inlineScript: |
+                      set -euo pipefail
+                      export ARM_USE_OIDC=true ARM_OIDC_TOKEN="$idToken" ARM_CLIENT_ID="$servicePrincipalId" ARM_TENANT_ID="$tenantId"
+                      terraform init -input=false -backend-config=envs/${{ parameters.environment }}.backend.hcl
+                      terraform apply -input=false -lock-timeout=5m $(Pipeline.Workspace)/tfplan-${{ parameters.environment }}/tfplan
+                      echo "##vso[task.setvariable variable=webAppName;isOutput=true]$(terraform output -raw web_app_name)"
+                      echo "##vso[task.setvariable variable=resourceGroup;isOutput=true]$(terraform output -raw resource_group)"
+                - task: AzureWebApp@1
+                  displayName: Deploy app package
+                  inputs:
+                    azureSubscription: ${{ parameters.serviceConnection }}
+                    appType: webAppLinux
+                    appName: $(tf.webAppName)
+                    resourceGroupName: $(tf.resourceGroup)
+                    package: $(Pipeline.Workspace)/app/automatica-cloud.zip
+                    deploymentMethod: zipDeploy

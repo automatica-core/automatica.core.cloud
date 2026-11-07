@@ -1,0 +1,26 @@
+[Unit]
+Description=frps (Automatica Remote Connect)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=frps
+Group=frps
+ExecStartPre=+/usr/local/sbin/frps-render-config
+ExecStart=/usr/local/bin/frps -c /etc/frp/frps.toml
+Restart=on-failure
+RestartSec=15
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadOnlyPaths=/etc/frp
+
+[Install]
+WantedBy=multi-user.target

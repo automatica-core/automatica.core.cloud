@@ -1,4 +1,5 @@
-﻿using Automatica.Core.Cloud.EF.Models;
+using Automatica.Core.Cloud.EF.Models;
+using Microsoft.Extensions.Configuration;
 using Standard.Licensing;
 using System;
 using System.Collections.Generic;
@@ -8,56 +9,67 @@ namespace Automatica.Core.Cloud.LicenseManager
 {
     public class LicenseManager : ILicenseManager
     {
-        private const string MySecretLicenseBla = "`SzCQ975c.yN~9@N";
+        /// <summary>
+        /// Configuration key of the secret part of the private key passphrase (Key Vault: License--PrivateKeyPassword).
+        /// Existing keys in the database are encrypted with the value that used to be hard-coded here, so the
+        /// Key Vault secret must hold that same value until the signing keys are rotated.
+        /// </summary>
+        public const string PasswordConfigKey = "License:PrivateKeyPassword";
 
-        public LicenseManager(CoreContext coreContext)
+        private readonly IConfiguration _config;
+
+        public LicenseManager(CoreContext coreContext, IConfiguration config)
         {
             CoreContext = coreContext;
+            _config = config;
         }
 
         public CoreContext CoreContext { get; }
 
-        public string GeneratePublicPrivateKey(System.Version version)
+        private string GetPassphrase(int major)
+        {
+            var secret = _config[PasswordConfigKey];
+            if (string.IsNullOrEmpty(secret))
+            {
+                throw new InvalidOperationException($"{PasswordConfigKey} is not configured; licenses cannot be signed.");
+            }
+            // keep the historic derivation (major repeated four times + secret) so existing keys still open
+            return $"{major}{major}{major}{major}{secret}";
+        }
+
+        public string GeneratePublicPrivateKey(Version version)
         {
             var vers = CoreContext.LicenseKeys.SingleOrDefault(a => a.Version == version.Major);
 
-            var privateKey = "";
-            var publicKey = "";
-            if (vers == null)
+            if (vers != null)
             {
-                var keyGenerator = Standard.Licensing.Security.Cryptography.KeyGenerator.Create();
-                var keyPair = keyGenerator.GenerateKeyPair();
-                privateKey = keyPair.ToEncryptedPrivateKeyString(version.Major + version.Major + version.Major + version.Major + MySecretLicenseBla);
-                publicKey = keyPair.ToPublicKeyString();
-
-                vers = new LicenseKey
-                {
-                    PrivateKey = privateKey,
-                    PublicKey = publicKey,
-                    Version = version.Major,
-                    ObjId = Guid.NewGuid()
-                };
-
-                CoreContext.Add(vers);
-                CoreContext.SaveChanges();
+                return vers.PublicKey;
             }
-            else
+
+            var keyGenerator = Standard.Licensing.Security.Cryptography.KeyGenerator.Create();
+            var keyPair = keyGenerator.GenerateKeyPair();
+            vers = new LicenseKey
             {
-                privateKey = vers.PrivateKey;
-            }
-            return publicKey;
+                PrivateKey = keyPair.ToEncryptedPrivateKeyString(GetPassphrase(version.Major)),
+                PublicKey = keyPair.ToPublicKeyString(),
+                Version = version.Major,
+                ObjId = Guid.NewGuid()
+            };
 
+            CoreContext.Add(vers);
+            CoreContext.SaveChanges();
+            return vers.PublicKey;
         }
 
         public string CreateLicense(
-            int maxDatapoints, 
-            int maxUsers, 
-            Guid this2CoreServer, 
-            DateTime expires, 
-            string licensedTo, 
-            string email, 
-            bool allowRemoteControl, 
-            int maxRemoteTunnels, 
+            int maxDatapoints,
+            int maxUsers,
+            Guid this2CoreServer,
+            DateTime expires,
+            string licensedTo,
+            string email,
+            bool allowRemoteControl,
+            int maxRemoteTunnels,
             long maxRecordingDataPoints,
             int maxSatellites,
             bool allowTextToSpeech,
@@ -67,25 +79,25 @@ namespace Automatica.Core.Cloud.LicenseManager
         }
 
         public string CreateTrialLicense(
-            int maxDatapoints, 
-            int maxUsers, 
-            Guid this2CoreServer, 
-            DateTime expires, 
-            string licensedTo, 
+            int maxDatapoints,
+            int maxUsers,
+            Guid this2CoreServer,
+            DateTime expires,
+            string licensedTo,
             string email)
         {
             return Create(LicenseType.Trial, maxDatapoints, maxUsers, this2CoreServer, expires, licensedTo, email, false, 0, 50, 1, false, new List<string>());
         }
 
         private string Create(
-            LicenseType type, 
-            int maxDatapoints, 
-            int maxUsers, 
-            Guid this2CoreServer, 
-            DateTime expires, 
-            string licensedTo, 
-            string email, 
-            bool allowRemoteControl, 
+            LicenseType type,
+            int maxDatapoints,
+            int maxUsers,
+            Guid this2CoreServer,
+            DateTime expires,
+            string licensedTo,
+            string email,
+            bool allowRemoteControl,
             int maxRemoteTunnels,
             long maxRecordingDataPoints,
             int maxSatellites,
@@ -93,18 +105,19 @@ namespace Automatica.Core.Cloud.LicenseManager
             IList<string> features)
         {
             var coreServer = CoreContext.CoreServers.Single(a => a.ObjId == this2CoreServer);
-            return Create(type, maxDatapoints, maxUsers, coreServer.VersionObj, coreServer.ServerGuid, expires, licensedTo, email, allowRemoteControl,maxRemoteTunnels, maxRecordingDataPoints, maxSatellites, allowTextToSpeech, features);
+            var version = coreServer.VersionObj ?? new Version(0, 0);
+            return Create(type, maxDatapoints, maxUsers, version, coreServer.ServerGuid, expires, licensedTo, email, allowRemoteControl, maxRemoteTunnels, maxRecordingDataPoints, maxSatellites, allowTextToSpeech, features);
         }
 
         private string Create(
-            LicenseType type, 
-            int maxDatapoints, int maxUsers, 
-            Version version, 
-            Guid licenseId, 
-            DateTime expires, 
-            string licensedTo, 
-            string email, 
-            bool allowRemoteControl, 
+            LicenseType type,
+            int maxDatapoints, int maxUsers,
+            Version version,
+            Guid licenseId,
+            DateTime expires,
+            string licensedTo,
+            string email,
+            bool allowRemoteControl,
             int maxRemoteTunnels,
             long maxRecordingDataPoints,
             int maxSatellites,
@@ -117,7 +130,6 @@ namespace Automatica.Core.Cloud.LicenseManager
             {
                 throw new ArgumentException("Could not find key to sign the license");
             }
-
 
             var license = Standard.Licensing.License.New()
                 .WithUniqueIdentifier(licenseId)
@@ -136,16 +148,16 @@ namespace Automatica.Core.Cloud.LicenseManager
                 })
                 .LicensedTo(licensedTo, email);
 
-            license.WithProductFeatures(features.ToDictionary(a => a, a => "true")); 
+            license.WithProductFeatures((features ?? new List<string>()).Distinct().ToDictionary(a => a, a => "true"));
 
-            var lic = license.CreateAndSignWithPrivateKey(key.PrivateKey, version.Major + version.Major + version.Major + version.Major + MySecretLicenseBla);
+            var lic = license.CreateAndSignWithPrivateKey(key.PrivateKey, GetPassphrase(version.Major));
 
             return lic.ToString();
         }
 
         public string CreateDemoLicense()
         {
-            return Create(LicenseType.Trial, 100, 1, new System.Version(0, 0), Guid.NewGuid(),new DateTime(2030, 12, 31), "Anybody", "nobody@nobody.nobody", false, 0,10, 0,false, new List<string>());
+            return Create(LicenseType.Trial, 100, 1, new Version(0, 0), Guid.NewGuid(), new DateTime(2030, 12, 31), "Anybody", "nobody@nobody.nobody", false, 0, 10, 0, false, new List<string>());
         }
     }
 }

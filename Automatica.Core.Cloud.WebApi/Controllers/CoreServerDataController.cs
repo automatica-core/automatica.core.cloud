@@ -1,60 +1,28 @@
-﻿using Automatica.Core.Cloud.EF.Models;
-using Automatica.Core.Cloud.WebApi.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Asp.Versioning;
+using Automatica.Core.Cloud.EF.Models;
+using Automatica.Core.Cloud.WebApi.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    public class RemoteConnectPortResponse
+    /// <summary>
+    /// Legacy v1 api for cores older than 0.6 (authenticated by api key only). Routes and payloads are unchanged.
+    /// </summary>
+    [AllowAnonymous, Route("webapi/v1/coreServerData"), CoreServerApiKey(requireServerGuid: false), ApiVersion("1.0")]
+    [EnableRateLimiting(RateLimits.CoreApi)]
+    public class CoreServerDataController : BaseController
     {
-        private int _port;
+        private static readonly Version LegacyLimit = new(0, 6);
+        private readonly CoreContext _db;
 
-        public int Port
+        public CoreServerDataController(CoreContext db)
         {
-            get => _port + 1023;
-            set => _port = value;
-        }
-    }
-    public class CreateRemoteConnectPortObject
-    {
-        public Guid DriverId { get; set; }
-        public string ServiceName { get; set; }
-        public string TunnelingProtocol { get; set; }
-    }
-    public class CreateRemoteConnectObject
-    {
-        public string TargetSubDomain { get; set; }
-    }
-    public class RemoteConnectObject
-    {
-        public string SubDomain { get; set; }
-        public string TunnelUrl { get; set; }
-    }
-
-    public class SayHelloData
-    {
-        public string Rid { get; set; }
-        public string Version { get; set; }
-        public Guid ServerGuid { get; set; }
-    }
-
-    public class EmailData
-    {
-        public IList<string> To { get; set; }
-        public string Subject { get; set; }
-        public string Body { get; set; }
-    }
-
-    [AllowAnonymous, Route("webapi/v1/coreServerData"), ServerApiKeyAuthorization, ApiVersion("1.0")]
-    public class CoreServerDataController : AzureStorageController
-    {
-
-        public CoreServerDataController(IConfiguration config) : base(config)
-        {
+            _db = db;
         }
 
         [HttpGet, Route("checkLicense/{apiKey}")]
@@ -64,29 +32,19 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         }
 
         [HttpPost, Route("sayHello/{apiKey}")]
-        public void SayHello([FromBody]SayHelloData sayHelloData, Guid apiKey)
+        public void SayHello([FromBody] SayHelloData sayHelloData)
         {
-            var versionObj = new Version(sayHelloData.Version);
-            if (versionObj >= new Version(0, 6))
+            if (!Version.TryParse(sayHelloData?.Version, out var versionObj) || versionObj >= LegacyLimit)
             {
                 return;
             }
 
-            using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
-
+            var server = HttpContext.GetCoreServer();
             server.LastKnownConnection = DateTime.Now;
             server.Rid = sayHelloData.Rid;
             server.ServerGuid = sayHelloData.ServerGuid;
             server.Version = sayHelloData.Version;
-
-            dbContext.Update(server);
-            dbContext.SaveChanges();
+            _db.SaveChanges();
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}")]
@@ -98,44 +56,36 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{branch}/{apiKey}")]
         public ServerVersion CheckForUpdates(string rid, string coreServerVersion, string branch)
         {
-            var versionObj = new Version(coreServerVersion);
-            if (versionObj >= new Version(0, 6))
+            if (!Version.TryParse(coreServerVersion, out var versionObj) || versionObj >= LegacyLimit)
             {
                 return null;
             }
 
-            using var dbContext = new CoreContext(Config);
-            var versions = dbContext.Versions.Where(a => a.VersionObj > versionObj && a.Rid == rid && a.Branch == branch).OrderByDescending(a => a.VersionObj).ToList();
-
-            if (versions.Count > 0)
-            {
-                return versions[0];
-            }
-            return null;
+            return _db.Versions.Where(a => a.Rid == rid && a.Branch == branch).ToList()
+                .Where(a => a.VersionObj > versionObj)
+                .OrderByDescending(a => a.VersionObj)
+                .FirstOrDefault();
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
-        public IEnumerable<Plugin>    GetAvailablePlugins(string coreServerVersion)
+        public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
         {
-            var versionObj = new Version(coreServerVersion);
-            if (versionObj >= new Version(0, 6))
+            if (!Version.TryParse(coreServerVersion, out var versionObj) || versionObj >= LegacyLimit)
             {
                 return null;
             }
 
-            using var dbContext = new CoreContext(Config);
-            var versions = dbContext.Plugins.Where(a => versionObj >= a.MinCoreServerVersionObj).ToList();
+            var versions = _db.Plugins.ToList().Where(a => a.MinCoreServerVersionObj != null && versionObj >= a.MinCoreServerVersionObj).ToList();
             return from r in versions
-                group r by r.PluginGuid into g
-                select g.OrderByDescending(x_ => x_.VersionObj).First();
+                   group r by r.PluginGuid into g
+                   select g.OrderByDescending(x => x.VersionObj).First();
         }
 
         [HttpGet, Route("ping/{apiKey}")]
-        public string Ping(Guid apiKey)
+        public string Ping()
         {
-            using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-            if (server == null || server.VersionObj >= new Version(0, 6))
+            var server = HttpContext.GetCoreServer();
+            if (server.VersionObj >= LegacyLimit)
             {
                 return null;
             }

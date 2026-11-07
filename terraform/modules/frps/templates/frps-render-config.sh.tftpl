@@ -1,0 +1,59 @@
+#!/bin/bash
+# Writes /etc/frp/frps.toml from Key Vault secrets (read with the VM's user-assigned identity).
+# Runs as ExecStartPre of frps.service, so a restart picks up rotated secrets.
+set -euo pipefail
+umask 027
+
+KV="${key_vault_name}"
+CLIENT_ID="${identity_client_id}"
+
+ACCESS_TOKEN=$(curl -fsS -H Metadata:true \
+  "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fvault.azure.net&client_id=$CLIENT_ID" \
+  | jq -r .access_token)
+
+secret() {
+  curl -fsS -H "Authorization: Bearer $ACCESS_TOKEN" "https://$KV.vault.azure.net/secrets/$1?api-version=7.4" | jq -r .value
+}
+
+FRPS_TOKEN=$(secret Frps--Token)
+PLUGIN_SECRET=$(secret Frps--PluginSecret)
+PLUGIN_HOST=$(secret Frps--PluginHost)
+DASHBOARD_PASSWORD=$(secret Frps--DashboardPassword)
+TOKEN_AUTH=$(secret Frps--TokenAuthEnabled)
+
+# Until the cores send the token (FRPS_TOKEN), auth stays open and the cloud plugin alone decides.
+AUTH_TOKEN=""
+if [ "$TOKEN_AUTH" = "true" ]; then
+  AUTH_TOKEN="$FRPS_TOKEN"
+fi
+
+cat > /etc/frp/frps.toml.new <<EOF
+bindAddr = "0.0.0.0"
+bindPort = 7000
+vhostHTTPPort = 8080
+vhostHTTPSPort = 8443
+subDomainHost = "${subdomain_host}"
+allowPorts = [{ start = ${port_start}, end = ${port_end} }]
+
+auth.method = "token"
+auth.token = "$AUTH_TOKEN"
+
+webServer.addr = "127.0.0.1"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "$DASHBOARD_PASSWORD"
+
+log.to = "console"
+log.level = "info"
+log.disablePrintColor = true
+
+[[httpPlugins]]
+name = "automatica-cloud"
+addr = "https://$PLUGIN_HOST"
+path = "/webapi/v1/frps/handler/$PLUGIN_SECRET"
+ops = ["Login", "NewProxy"]
+EOF
+
+chown root:frps /etc/frp/frps.toml.new
+chmod 0640 /etc/frp/frps.toml.new
+mv /etc/frp/frps.toml.new /etc/frp/frps.toml

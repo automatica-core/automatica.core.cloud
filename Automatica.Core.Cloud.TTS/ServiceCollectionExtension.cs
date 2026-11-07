@@ -1,17 +1,13 @@
-﻿
-
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Automatica.Core.Cloud.TTS
 {
     public static class ServiceCollectionExtension
     {
-        public static IServiceCollection AddTextToSpeechProvider(this IServiceCollection serviceProvider)
+        public static IServiceCollection AddTextToSpeechProvider(this IServiceCollection services)
         {
-
-            serviceProvider.AddTransient<ITextToSpeechService, SpeechSynthesisService>();
-            return serviceProvider;
+            services.AddTransient<ITextToSpeechService, SpeechSynthesisService>();
+            return services;
         }
-     
     }
 }

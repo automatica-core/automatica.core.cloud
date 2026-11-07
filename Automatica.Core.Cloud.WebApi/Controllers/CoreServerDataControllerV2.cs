@@ -1,32 +1,53 @@
-﻿using Automatica.Core.Cloud.EF.Models;
-using Automatica.Core.Cloud.WebApi.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Asp.Versioning;
+using Automatica.Core.Cloud.EF.Models;
 using Automatica.Core.Cloud.RemoteControl;
-using Azure;
-using Azure.Communication.Email;
+using Automatica.Core.Cloud.WebApi.Authentication;
+using Automatica.Core.Cloud.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using ServerVersion = Automatica.Core.Cloud.EF.Models.ServerVersion;
-using Polly;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-
-    [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), ServerApiKeyAuthorizationV2, ApiVersion("2.0")]
-    public class CoreServerDataControllerV2 : AzureStorageController
+    /// <summary>
+    /// The api every current core calls: webapi/v2/coreServerData/.../{apiKey}/{serverGuid}.
+    /// Routes and payloads are unchanged; the core is authenticated by <see cref="CoreServerApiKeyFilter"/>.
+    /// </summary>
+    [AllowAnonymous, Route("webapi/v{version:apiVersion}/coreServerData"), CoreServerApiKey(requireServerGuid: true), ApiVersion("2.0")]
+    [EnableRateLimiting(RateLimits.CoreApi)]
+    public class CoreServerDataControllerV2 : BaseController
     {
-        private readonly IDnsManager _dnsManager;
-        private readonly EmailClient _emailClient;
+        private const int MaxRecipientsPerMail = 10;
 
-        public CoreServerDataControllerV2(IConfiguration config, CoreContext context, IDnsManager dnsManager, EmailClient emailClient) : base(config)
+        private readonly CoreContext _db;
+        private readonly IDnsManager _dnsManager;
+        private readonly IMailSender _mail;
+        private readonly IConfiguration _config;
+        private readonly ILogger<CoreServerDataControllerV2> _logger;
+
+        public CoreServerDataControllerV2(CoreContext db, IDnsManager dnsManager, IMailSender mail, IConfiguration config, ILogger<CoreServerDataControllerV2> logger)
         {
+            _db = db;
             _dnsManager = dnsManager;
-            _emailClient = emailClient;
+            _mail = mail;
+            _config = config;
+            _logger = logger;
+        }
+
+        private CoreServer Server => HttpContext.GetCoreServer();
+
+        private Task<License> GetLicenseAsync()
+        {
+            var serverId = Server.ObjId;
+            return _db.Licenses.Where(a => a.This2CoreServer == serverId).OrderByDescending(a => a.ExpiresAt).FirstOrDefaultAsync();
         }
 
         [HttpGet, Route("checkLicense/{apiKey}/{serverGuid}")]
@@ -35,68 +56,38 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
             return "INVALID LICENSE";
         }
 
-
-
-        [HttpGet, Route("license/{apiKey}/{serverGuid}"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public string GetLicenseForServer(Guid apiKey)
+        [HttpGet, Route("license/{apiKey}/{serverGuid}")]
+        public async Task<string> GetLicenseForServer()
         {
-            using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
-
-            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
-
+            var license = await GetLicenseAsync();
             if (license == null)
             {
                 throw new ArgumentException("No License available!");
             }
-
             return license.LicenseKey;
         }
 
         [HttpPost, Route("sayHello/{apiKey}/{serverGuid}")]
-        public void SayHello([FromBody]SayHelloData sayHelloData, Guid apiKey)
+        public async Task SayHello([FromBody] SayHelloData sayHelloData)
         {
-            using var dbContext = new CoreContext(Config);
-            var server = dbContext.CoreServers.SingleOrDefault(a => a.ApiKey == apiKey);
-
-            if (server == null)
-            {
-                throw new ArgumentException("Api key invalid");
-            }
-
+            var server = Server;
             server.LastKnownConnection = DateTime.Now;
-            server.Rid = sayHelloData.Rid;
-            server.Version = sayHelloData.Version;
-
-            dbContext.Update(server);
-            dbContext.SaveChanges();
+            server.Rid = sayHelloData?.Rid;
+            server.Version = sayHelloData?.Version;
+            await _db.SaveChangesAsync();
         }
 
-     
-
         [HttpPost, Route("createRemoteConnectPort/{apiKey}/{serverGuid}")]
-        public async Task<RemoteConnectPortResponse> CreateRemoteConnectPort(
-            [FromBody] CreateRemoteConnectPortObject createRemoteConnectPortObject, Guid apiKey)
+        public async Task<RemoteConnectPortResponse> CreateRemoteConnectPort([FromBody] CreateRemoteConnectPortObject createRemoteConnectPortObject)
         {
-            await using var dbContext = new CoreContext(Config);
-            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
-
-            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
-
+            var server = Server;
+            var license = await GetLicenseAsync();
             if (license is not { AllowRemoteControl: true })
             {
                 throw new ArgumentException("No license or invalid license found!");
             }
 
-
-            var ports = dbContext.RemoteControlPorts.Where(a => a.This2CoreServer == server.ObjId).ToList();
-            
-            var port = ports.FirstOrDefault(a => a.This2DriverId == createRemoteConnectPortObject.DriverId);
+            var port = await _db.RemoteControlPorts.FirstOrDefaultAsync(a => a.This2CoreServer == server.ObjId && a.This2DriverId == createRemoteConnectPortObject.DriverId);
 
             var ret = new RemoteConnectPortResponse();
             if (port == null)
@@ -110,194 +101,205 @@ namespace Automatica.Core.Cloud.WebApi.Controllers
                     PortType = createRemoteConnectPortObject.TunnelingProtocol
                 };
 
-                var entity = dbContext.RemoteControlPorts.Add(newPort);
-                await dbContext.SaveChangesAsync();
-
+                var entity = _db.RemoteControlPorts.Add(newPort);
+                await _db.SaveChangesAsync();
                 ret.Port = entity.Entity.Port;
             }
             else
             {
                 ret.Port = port.Port;
                 port.LastUsed = DateTime.Now;
+                await _db.SaveChangesAsync();
             }
 
             return ret;
         }
 
-
         [HttpPost, Route("createRemoteConnect/{apiKey}/{serverGuid}")]
-        public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid apiKey)
+        public Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject)
         {
-            return await CreateRemoteUrl(createRemoteConnectObject, null, apiKey);
+            return CreateRemoteUrl(createRemoteConnectObject, null);
         }
 
         [HttpPost, Route("createRemoteConnect/{pluginGuid}/{apiKey}/{serverGuid}")]
-        public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid? pluginGuid, Guid apiKey)
+        public async Task<RemoteConnectObject> CreateRemoteUrl([FromBody] CreateRemoteConnectObject createRemoteConnectObject, Guid? pluginGuid)
         {
-            await using var dbContext = new CoreContext(Config);
-            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
-
-            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
-
+            var server = Server;
+            var license = await GetLicenseAsync();
             if (license is not { AllowRemoteControl: true })
             {
                 throw new ArgumentException("No license or invalid license found!");
             }
 
-            var allDomains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId).AsNoTracking().ToList();
+            var target = SubDomainName.Normalize(createRemoteConnectObject?.TargetSubDomain);
+            if (!SubDomainName.IsValid(target))
+            {
+                throw new ArgumentException("Invalid sub domain name");
+            }
 
+            var allDomains = await _db.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId).AsNoTracking().ToListAsync();
             if (allDomains.Count > license.MaxRemoteTunnels)
             {
                 throw new ArgumentException("Max allowed licenses reached...");
             }
 
-            var domains = dbContext.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId && a.PluginGuid == pluginGuid).AsNoTracking().ToList();
+            var domains = await _db.RemoteControlSubDomains.Where(a => a.This2CoreServer == server.ObjId && a.PluginGuid == pluginGuid).ToListAsync();
 
-            var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId, pluginGuid);
-
+            var isDnsAvailable = await _dnsManager.IsDnsNameAvailableAsync(target, server.ObjId, pluginGuid);
             if (!isDnsAvailable)
             {
                 throw new ArgumentException("DNS Name is not available!");
             }
 
-            bool alreadyExist = false;
+            var alreadyExist = false;
             foreach (var domain in domains)
             {
-                if (domain.SubDomain == createRemoteConnectObject.TargetSubDomain)
+                if (string.Equals(domain.SubDomain, target, StringComparison.OrdinalIgnoreCase))
                 {
-                    var curDomain = dbContext.RemoteControlSubDomains.Single(a => a.ObjId == domain.ObjId);
-                    curDomain.LastUsed = DateTime.Now;
-                    curDomain.PluginGuid = pluginGuid;
-                    dbContext.Update(curDomain);
+                    domain.LastUsed = DateTime.Now;
+                    domain.PluginGuid = pluginGuid;
                     alreadyExist = true;
                 }
                 else
                 {
                     await _dnsManager.RemoveDnsNameAsync(domain.SubDomain, server.ObjId, pluginGuid);
-                    dbContext.Remove(domain);
+                    _db.Remove(domain);
                 }
             }
 
-            var targetUrl = await _dnsManager.CreateDnsNameAsync(createRemoteConnectObject.TargetSubDomain, server.ObjId, pluginGuid);
+            var targetUrl = await _dnsManager.CreateDnsNameAsync(target, server.ObjId, pluginGuid);
             var remoteConnectUrl = new RemoteConnectObject
             {
                 TunnelUrl = targetUrl.url,
-                SubDomain = createRemoteConnectObject.TargetSubDomain
+                SubDomain = target,
+                FrpsToken = string.IsNullOrEmpty(_config["Frps:Token"]) ? null : _config["Frps:Token"]
             };
-            
-            if(!pluginGuid.HasValue)
-                await SetRemoteConnectUrl(remoteConnectUrl, apiKey);
+
+            if (!pluginGuid.HasValue)
+            {
+                server.LastKnownRemoteConnectUrlDate = DateTime.Now;
+                server.LastKnownRemoteConnectUrl = remoteConnectUrl.TunnelUrl;
+            }
 
             if (!alreadyExist)
             {
-                var subDomain = new RemoteControlSubDomain
+                _db.Add(new RemoteControlSubDomain
                 {
                     Domain = "",
                     LastUsed = DateTime.Now,
                     ObjId = Guid.NewGuid(),
                     This2CoreServer = server.ObjId,
                     PluginGuid = pluginGuid,
-                    SubDomain = createRemoteConnectObject.TargetSubDomain
-                };
-                dbContext.Add(subDomain);
+                    SubDomain = target
+                });
             }
 
-            await dbContext.SaveChangesAsync();
-
+            await _db.SaveChangesAsync();
             return remoteConnectUrl;
         }
 
         [HttpPost, Route("remoteConnect/{apiKey}/{serverGuid}")]
-        public async Task<RemoteConnectObject> SetRemoteConnectUrl([FromBody] RemoteConnectObject remoteConnectObj, Guid apiKey)
+        public async Task<RemoteConnectObject> SetRemoteConnectUrl([FromBody] RemoteConnectObject remoteConnectObj)
         {
-            await using var dbContext = new CoreContext(Config);
-
-            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
-
+            var server = Server;
+            var url = remoteConnectObj?.TunnelUrl;
+            if (url != null && url.Length > 500)
+            {
+                throw new ArgumentException("Invalid url");
+            }
             server.LastKnownRemoteConnectUrlDate = DateTime.Now;
-            server.LastKnownRemoteConnectUrl = remoteConnectObj.TunnelUrl;
+            server.LastKnownRemoteConnectUrl = url;
+            await _db.SaveChangesAsync();
 
-            dbContext.Update(server);
-            await dbContext.SaveChangesAsync();
-            
             return remoteConnectObj;
         }
 
-        [HttpPost, Route("sendMail/{apiKey}/{serverGuid}")]
-        public async Task<string> SendMail([FromBody] EmailData emailData, Guid apiKey)
+        /// <summary>
+        /// Sends a notification from the core. Only goes to the server owner's address and recipients verified in
+        /// the cloud UI, as plain text inside one fixed template, rate limited per server.
+        /// </summary>
+        [HttpPost, Route("sendMail/{apiKey}/{serverGuid}"), EnableRateLimiting(RateLimits.Mail)]
+        public async Task<string> SendMail([FromBody] EmailData emailData)
         {
-            await using var dbContext = new CoreContext(Config);
-
-            var server = await CheckIfServerExistsAndIsValid(dbContext, apiKey, null);
-
-            var license = dbContext.Licenses.SingleOrDefault(a => a.This2CoreServer == server.ObjId);
-
+            var server = Server;
+            var license = await GetLicenseAsync();
             if (license == null)
             {
                 throw new ArgumentException("No license or invalid license found!");
             }
 
-            foreach (var to in emailData.To)
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var owner = await _db.Users.AsNoTracking().SingleOrDefaultAsync(a => a.ObjId == server.This2User);
+            if (!string.IsNullOrEmpty(owner?.Email))
             {
-                await _emailClient.SendAsync(
-                    WaitUntil.Started,
-                    senderAddress: "cloud@automaticacore.com",
-                    recipientAddress: to,
-                    subject: emailData.Subject,
-                    htmlContent: emailData.Body);
+                allowed.Add(owner.Email.Trim());
+            }
+            var verified = await _db.MailRecipients.AsNoTracking()
+                .Where(a => a.This2CoreServer == server.ObjId && a.VerifiedAt != null)
+                .Select(a => a.Email).ToListAsync();
+            foreach (var address in verified)
+            {
+                allowed.Add(address.Trim());
             }
 
-            return "{\"Result\": true}";
+            var requested = (emailData?.To ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var recipients = requested.Where(allowed.Contains).Take(MaxRecipientsPerMail).ToList();
+            var skipped = requested.Where(a => !allowed.Contains(a)).ToList();
+
+            if (skipped.Count > 0)
+            {
+                _logger.LogWarning("Core server {ServerId} tried to mail {Count} unverified recipients", server.ObjId, skipped.Count);
+            }
+
+            var subject = MailTemplates.SanitizeSubject(emailData?.Subject);
+            var text = MailTemplates.ToPlainText(emailData?.Body);
+            var html = MailTemplates.CoreMessageHtml(server.ServerName, text);
+
+            foreach (var to in recipients)
+            {
+                await _mail.SendAsync(to, subject, text, html);
+            }
+
+            return Newtonsoft.Json.JsonConvert.SerializeObject(new { Result = recipients.Count > 0, Skipped = skipped });
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{apiKey}/{serverGuid}")]
-        public async Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion, Guid apiKey, Guid serverGuid)
+        public Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion)
         {
-            return await CheckForUpdates(rid, coreServerVersion, "develop", apiKey, serverGuid);
+            return CheckForUpdates(rid, coreServerVersion, "develop");
         }
 
         [HttpGet, Route("checkForUpdates/{rid}/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
-        public async Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion, string branch, Guid apiKey, Guid serverGuid)
+        public async Task<ServerVersion> CheckForUpdates(string rid, string coreServerVersion, string branch)
         {
-            await using var dbContext = new CoreContext(Config);
-            await CheckIfServerExistsAndIsValid(dbContext, apiKey, serverGuid);
-
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Versions.Where(a => a.Rid == rid && a.Branch == branch).ToList().Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
+            var versions = (await _db.Versions.Where(a => a.Rid == rid && a.Branch == branch).ToListAsync())
+                .Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
 
-            if (versions.Count > 0)
-            {
-                return versions[0];
-            }
-            return null;
+            return versions.Count > 0 ? versions[0] : null;
         }
 
         [HttpGet, Route("checkForDockerUpdates/{branch}/{coreServerVersion}/{apiKey}/{serverGuid}")]
-        public async Task<ServerDockerVersion> CheckForDockerUpdates(string coreServerVersion, string branch, Guid apiKey, Guid serverGuid)
+        public async Task<ServerDockerVersion> CheckForDockerUpdates(string coreServerVersion, string branch)
         {
-            await using var dbContext = new CoreContext(Config);
-            await CheckIfServerExistsAndIsValid(dbContext, apiKey, serverGuid);
-
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.DockerVersions.ToList().Where(a => a.Branch == branch).ToList().Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
+            var versions = (await _db.DockerVersions.Where(a => a.Branch == branch).ToListAsync())
+                .Where(a => a.VersionObj > versionObj).OrderByDescending(a => a.VersionObj).ToList();
 
-            if (versions.Count > 0)
-            {
-                return versions[0];
-            }
-            return null;
+            return versions.Count > 0 ? versions[0] : null;
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{branch}/{apiKey}/{serverGuid}")]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion, string branch)
         {
-            using var dbContext = new CoreContext(Config);
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Plugins.ToList().Where(a => versionObj >= a.MinCoreServerVersionObj && a.Branch == branch).ToList();
+            var versions = _db.Plugins.AsNoTracking().Where(a => a.Branch == branch).ToList()
+                .Where(a => a.MinCoreServerVersionObj != null && versionObj >= a.MinCoreServerVersionObj).ToList();
 
             return from r in versions
-                group r by r.PluginGuid into g
-                select g.OrderByDescending(x => x.VersionObj).First();
+                   group r by r.PluginGuid into g
+                   select g.OrderByDescending(x => x.VersionObj).First();
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}/{serverGuid}")]

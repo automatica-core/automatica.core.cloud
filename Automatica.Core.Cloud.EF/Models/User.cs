@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Security.Cryptography;
+using Newtonsoft.Json;
 
 namespace Automatica.Core.Cloud.EF.Models
 {
@@ -14,6 +13,7 @@ namespace Automatica.Core.Cloud.EF.Models
         Administrator,
         SystemAdministrator
     }
+
     public class User
     {
         [Key]
@@ -23,43 +23,47 @@ namespace Automatica.Core.Cloud.EF.Models
 
         public string PublisherName { get; set; }
 
+        [JsonIgnore]
         public string PasswordHash { get; set; }
+        [JsonIgnore]
         public string Salt { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
 
         public bool Enabled { get; set; }
+        [JsonIgnore]
         public string ActivationCode { get; set; }
 
         public UserRole UserRole { get; set; }
 
+        /// <summary>
+        /// Legacy per-user api key. It is no longer accepted as a credential anywhere (CI uses <see cref="DeployKey"/>).
+        /// </summary>
+        [JsonIgnore]
         public Guid ApiKey { get; set; }
 
+        /// <summary>
+        /// Changes whenever the password, role or enabled state changes. Access and refresh tokens carry it,
+        /// so changing it revokes every token issued before.
+        /// </summary>
+        [JsonIgnore]
+        public string SecurityStamp { get; set; }
+
+        public DateTime? LastLoginAt { get; set; }
+
+        [JsonIgnore]
+        public int FailedLoginCount { get; set; }
+
+        [JsonIgnore]
+        public DateTime? LockedUntil { get; set; }
+
         [NotMapped]
-        public string Token { get; set; }
+        [JsonIgnore]
+        public bool HasUsablePassword => PasswordHashing.IsUsable(PasswordHash);
 
-        public static string HashPassword(string password, string saltString)
+        public void RenewSecurityStamp()
         {
-            byte[] salt = Convert.FromBase64String(saltString);
-
-            string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password,
-                salt,
-                KeyDerivationPrf.HMACSHA1,
-                10000,
-                256 / 8));
-            return hashed;
-        }
-
-        public static string GenerateNewSalt()
-        {
-            byte[] salt = new byte[128 / 8];
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                rng.GetBytes(salt);
-            }
-
-            return Convert.ToBase64String(salt);
+            SecurityStamp = Guid.NewGuid().ToString("N");
         }
     }
 }

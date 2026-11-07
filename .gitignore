@@ -262,3 +262,6 @@ __pycache__/
 
 .angular
 .terraform
+# terraform plans
+*.tfplan
+tfplan

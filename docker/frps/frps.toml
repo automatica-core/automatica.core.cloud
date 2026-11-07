@@ -1,0 +1,26 @@
+# frps for container use. All secrets come from the environment (never baked into the image):
+#   FRPS_TOKEN, FRPS_DASHBOARD_PASSWORD, FRPS_PLUGIN_HOST, FRPS_PLUGIN_SECRET, SUBDOMAIN_HOST
+# The Azure VM deployment (terraform/modules/frps) renders the same settings from Key Vault.
+bindPort = 7000
+vhostHTTPPort = 80
+vhostHTTPSPort = 443
+subDomainHost = "{{ .Envs.SUBDOMAIN_HOST }}"
+allowPorts = [{ start = 1024, end = 2047 }]
+
+auth.method = "token"
+auth.token = "{{ .Envs.FRPS_TOKEN }}"
+
+# dashboard only inside the container network
+webServer.addr = "127.0.0.1"
+webServer.port = 7500
+webServer.user = "admin"
+webServer.password = "{{ .Envs.FRPS_DASHBOARD_PASSWORD }}"
+
+log.to = "console"
+log.level = "info"
+
+[[httpPlugins]]
+name = "automatica-cloud"
+addr = "https://{{ .Envs.FRPS_PLUGIN_HOST }}"
+path = "/webapi/v1/frps/handler/{{ .Envs.FRPS_PLUGIN_SECRET }}"
+ops = ["Login", "NewProxy"]

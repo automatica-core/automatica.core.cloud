@@ -1,156 +1,91 @@
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
+  "cli": {
+    "packageManager": "npm"
+  },
   "newProjectRoot": "projects",
   "projects": {
     "automatica-cloud": {
-      "root": "",
-      "sourceRoot": "src",
       "projectType": "application",
-      "prefix": "core",
       "schematics": {
         "@schematics/angular:component": {
           "style": "scss"
         }
       },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular/build:application",
           "options": {
-            "aot": true,
-            "outputPath": "../Automatica.Core.Cloud/wwwroot",
-            "index": "src/index.html",
-            "main": "src/main.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.app.json",
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
             "assets": [
-              "src/favicon.ico",
-              "src/vendors",
-              "src/assets",
               {
-                "glob": "*.json",
-                "input": "node_modules/devextreme/localization/messages",
-                "output": "/assets/dx"
+                "glob": "**/*",
+                "input": "public"
               }
             ],
             "styles": [
-              "src/styles/app.scss",
-              "src/styles/bootstrap.scss",
-              "src/styles/layout.scss",
-              "src/styles/loader.scss",
-              "src/styles/material2-theme.scss",
-              "src/styles/theme.scss",
-              "src/styles/ui.scss",
-              "node_modules/devextreme/dist/css/dx.common.css",
-              "node_modules/devextreme/dist/css/dx.light.css",
-              "src/assets/styles/p3-dx.css"
+              "@fontsource-variable/figtree/index.css",
+              "@fontsource/ibm-plex-mono/latin-400.css",
+              "@fontsource/ibm-plex-mono/latin-500.css",
+              "src/styles.scss"
             ],
-            "scripts": [
-              "node_modules/jquery/dist/jquery.min.js",
-              "node_modules/bootstrap/dist/js/bootstrap.js"
-            ]
+            "outputPath": {
+              "base": "../Automatica.Core.Cloud/wwwroot",
+              "browser": ""
+            },
+            "index": "src/index.html"
           },
           "configurations": {
             "production": {
-              "fileReplacements": [
+              "budgets": [
                 {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
+                  "type": "initial",
+                  "maximumWarning": "600kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kB",
+                  "maximumError": "10kB"
                 }
               ],
-              "optimization": true,
               "outputHashing": "all",
-              "sourceMap": false,
-              "namedChunks": false,
-              "aot": true,
-              "extractLicenses": true,
-              "vendorChunk": false,
-              "buildOptimizer": true
+              "optimization": {
+                "scripts": true,
+                "styles": { "minify": true, "inlineCritical": false },
+                "fonts": true
+              }
             },
             "development": {
-              "sourceMap": true,
-              "outputHashing": "all",
-              "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
-              "namedChunks": true,
-              "fileReplacements": []
+              "sourceMap": true
             }
-          }
+          },
+          "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
-          "options": {
-            "browserTarget": "automatica-cloud:build"
-          },
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "automatica-cloud:build:production"
+              "buildTarget": "automatica-cloud:build:production"
+            },
+            "development": {
+              "buildTarget": "automatica-cloud:build:development"
             }
-          }
-        },
-        "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          },
+          "defaultConfiguration": "development",
           "options": {
-            "browserTarget": "automatica-cloud:build"
-          }
-        },
-        "test": {
-          "builder": "@angular-devkit/build-angular:karma",
-          "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.spec.json",
-            "karmaConfig": "src/karma.conf.js",
-            "styles": ["src/styles.css"],
-            "scripts": [],
-            "assets": ["src/favicon.ico", "src/assets"]
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": ["src/tsconfig.app.json", "src/tsconfig.spec.json"],
-            "exclude": ["**/node_modules/**"]
+            "proxyConfig": "proxy.conf.json"
           }
         }
       }
-    },
-    "automatica-cloud-e2e": {
-      "root": "e2e/",
-      "projectType": "application",
-      "targets": {
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "automatica-cloud:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "automatica-cloud:serve:production"
-            }
-          }
-        },
-        "lint": {
-          "builder": "@angular-devkit/build-angular:tslint",
-          "options": {
-            "tsConfig": "e2e/tsconfig.e2e.json",
-            "exclude": ["**/node_modules/**"]
-          }
-        }
-      }
-    }
-  },
-  "schematics": {
-    "@schematics/angular:class": {},
-    "@schematics/angular:component": {
-      "style": "scss",
-      "prefix": "core"
-    },
-    "@schematics/angular:directive": {
-      "prefix": "core"
     }
   }
 }

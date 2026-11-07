@@ -17,7 +17,7 @@ namespace Automatica.Core.Cloud.EF.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.5")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -29,8 +29,14 @@ namespace Automatica.Core.Cloud.EF.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ApiKey")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApiKeyCreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("ApiKeyHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("varbinary(32)");
 
                     b.Property<DateTime?>("LastKnownConnection")
                         .HasColumnType("datetime2");
@@ -60,9 +66,72 @@ namespace Automatica.Core.Cloud.EF.Migrations
 
                     b.HasKey("ObjId");
 
+                    b.HasIndex("ApiKeyHash");
+
+                    b.HasIndex("ServerGuid");
+
                     b.HasIndex("This2User");
 
                     b.ToTable("CoreServers");
+                });
+
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.DeployKey", b =>
+                {
+                    b.Property<Guid>("ObjId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AllowedBranches")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varbinary(32)");
+
+                    b.Property<string>("KeyPrefix")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastUsedIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Scopes")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("This2User")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ObjId");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.HasIndex("This2User");
+
+                    b.ToTable("DeployKeys");
                 });
 
             modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.License", b =>
@@ -140,6 +209,41 @@ namespace Automatica.Core.Cloud.EF.Migrations
                     b.HasKey("ObjId");
 
                     b.ToTable("LicenseKeys");
+                });
+
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.MailRecipient", b =>
+                {
+                    b.Property<Guid>("ObjId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("nvarchar(254)");
+
+                    b.Property<Guid>("This2CoreServer")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("VerificationExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte[]>("VerificationTokenHash")
+                        .HasMaxLength(32)
+                        .HasColumnType("varbinary(32)");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ObjId");
+
+                    b.HasIndex("This2CoreServer", "Email")
+                        .IsUnique();
+
+                    b.ToTable("MailRecipients");
                 });
 
             modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.Plugin", b =>
@@ -220,6 +324,55 @@ namespace Automatica.Core.Cloud.EF.Migrations
                     b.HasIndex("This2Plugin");
 
                     b.ToTable("PluginFeatures");
+                });
+
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.RefreshToken", b =>
+                {
+                    b.Property<Guid>("ObjId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByIp")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("ReplacedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid>("This2User")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varbinary(32)");
+
+                    b.HasKey("ObjId");
+
+                    b.HasIndex("FamilyId");
+
+                    b.HasIndex("This2User");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.RemoteControlPort", b =>
@@ -369,11 +522,20 @@ namespace Automatica.Core.Cloud.EF.Migrations
                     b.Property<bool>("Enabled")
                         .HasColumnType("bit");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("int");
+
                     b.Property<string>("FirstName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LockedUntil")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -383,6 +545,10 @@ namespace Automatica.Core.Cloud.EF.Migrations
 
                     b.Property<string>("Salt")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("UserName")
                         .HasColumnType("nvarchar(max)");
@@ -401,6 +567,17 @@ namespace Automatica.Core.Cloud.EF.Migrations
                         .WithMany()
                         .HasForeignKey("This2User")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("This2UserNavigation");
+                });
+
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.DeployKey", b =>
+                {
+                    b.HasOne("Automatica.Core.Cloud.EF.Models.User", "This2UserNavigation")
+                        .WithMany()
+                        .HasForeignKey("This2User")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("This2UserNavigation");
@@ -425,6 +602,17 @@ namespace Automatica.Core.Cloud.EF.Migrations
                     b.Navigation("This2VersionKeyNavigation");
                 });
 
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.MailRecipient", b =>
+                {
+                    b.HasOne("Automatica.Core.Cloud.EF.Models.CoreServer", "This2CoreServerNavigation")
+                        .WithMany()
+                        .HasForeignKey("This2CoreServer")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("This2CoreServerNavigation");
+                });
+
             modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.Plugin", b =>
                 {
                     b.HasOne("Automatica.Core.Cloud.EF.Models.User", "This2UserNavigation")
@@ -445,6 +633,17 @@ namespace Automatica.Core.Cloud.EF.Migrations
                         .IsRequired();
 
                     b.Navigation("This2PluginNavigation");
+                });
+
+            modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.RefreshToken", b =>
+                {
+                    b.HasOne("Automatica.Core.Cloud.EF.Models.User", "This2UserNavigation")
+                        .WithMany()
+                        .HasForeignKey("This2User")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("This2UserNavigation");
                 });
 
             modelBuilder.Entity("Automatica.Core.Cloud.EF.Models.RemoteControlPort", b =>

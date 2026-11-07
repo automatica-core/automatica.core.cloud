@@ -1,167 +1,131 @@
-﻿using Automatica.Core.Cloud.EF.Models;
-using Automatica.Core.Cloud.LicenseManager;
-using Automatica.Core.Cloud.WebApi.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using Asp.Versioning;
+using Automatica.Core.Cloud.EF.Models;
+using Automatica.Core.Cloud.LicenseManager;
+using Automatica.Core.Cloud.WebApi.Authentication;
+using Automatica.Core.Cloud.WebApi.Dtos;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    public class PublicPrivateKey
-    {
-        public string Public { get; set; }
-        public string Version { get; set; }
-    }
-
-    public class GenerateLicenseData
-    {
-        public Guid ObjId { get; set; }
-        public DateTime ExpiresAt { get; set; }
-
-        public int MaxDatapoints { get; set; }
-        public int MaxUsers { get; set; }
-
-        public string LicensedTo { get; set; }
-        public string Email { get; set; }
-
-        public Guid This2CoreServer { get; set; }
-
-        public bool AllowRemoteControl { get; set; }
-
-        public int MaxRemoteTunnels { get; set; }
-        public long MaxRecordingDataPoints { get; set; }
-        public int MaxSatellites { get; set; }
-        public bool AllowTextToSpeech { get; set; }
-        public IList<string> Features { get; set; }
-    }
-
-    [Route("webapi/v{version:apiVersion}/license"), ApiVersion("1.0"), AllowAnonymous]
+    /// <summary>License administration. Every action needs an administrator; nothing here is anonymous.</summary>
+    [ApiController]
+    [Route("webapi/v{version:apiVersion}/license"), ApiVersion("1.0")]
+    [Authorize(Policy = Policies.Admin)]
     public class LicenseController : BaseController
     {
-        public LicenseController(CoreContext context, ILicenseManager licenseManager, IConfiguration config) : base(config)
+        private readonly CoreContext _db;
+        private readonly ILicenseManager _licenseManager;
+
+        public LicenseController(CoreContext db, ILicenseManager licenseManager)
         {
-            Context = context;
-            LicenseManager = licenseManager;
+            _db = db;
+            _licenseManager = licenseManager;
         }
 
-        public CoreContext Context { get; }
-        public ILicenseManager LicenseManager { get; }
-
-        [HttpPost, Route("key/{coreServerVersion}/{apiKey}"), NeedsRole(UserRole.SystemAdministrator), UserApiKeyAuthorization]
-        public PublicPrivateKey GeneratePublicPrivateKey(string coreServerVersion)
+        [HttpGet("")]
+        public async Task<IList<LicenseDto>> GetLicenses()
         {
-            var vers = new Version(coreServerVersion);
-            var publicKey = LicenseManager.GeneratePublicPrivateKey(vers);
+            var licenses = await _db.Licenses.AsNoTracking()
+                .Include(a => a.This2CoreServerNavigation).ThenInclude(a => a.This2UserNavigation)
+                .OrderBy(a => a.ExpiresAt)
+                .ToListAsync();
+            return licenses.Select(LicenseDto.From).ToList();
+        }
 
-            return new PublicPrivateKey
+        [HttpGet("features")]
+        public async Task<IList<string>> GetAllPluginFeatures()
+        {
+            var features = await _db.PluginFeatures.AsNoTracking().Select(a => a.FeatureName).Distinct().ToListAsync();
+            return features.OrderBy(a => a).ToList();
+        }
+
+        /// <summary>The signed license text as the core receives it.</summary>
+        [HttpGet("{id:guid}/key")]
+        public async Task<ActionResult<string>> GetLicenseKey(Guid id)
+        {
+            var license = await _db.Licenses.AsNoTracking().SingleOrDefaultAsync(a => a.ObjId == id);
+            return license == null ? NotFound() : Content(license.LicenseKey ?? string.Empty, "text/plain");
+        }
+
+        [HttpDelete("{id:guid}")]
+        public async Task<IActionResult> Delete(Guid id)
+        {
+            var license = await _db.Licenses.SingleOrDefaultAsync(a => a.ObjId == id);
+            if (license == null)
             {
-                Public = publicKey,
-                Version = vers.Major.ToString()
+                return NotFound();
+            }
+            _db.Remove(license);
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>Signs a new license for a server. An existing license of that server is replaced.</summary>
+        [HttpPost("")]
+        public async Task<ActionResult<LicenseDto>> GenerateLicense([FromBody] GenerateLicenseDto data)
+        {
+            var coreServer = await _db.CoreServers.Include(a => a.This2UserNavigation).SingleOrDefaultAsync(a => a.ObjId == data.CoreServerId);
+            if (coreServer == null)
+            {
+                return BadRequest(new { error = "server-not-found" });
+            }
+
+            var major = coreServer.VersionObj?.Major ?? 0;
+            var key = await _db.LicenseKeys.SingleOrDefaultAsync(a => a.Version == major);
+            if (key == null)
+            {
+                return BadRequest(new { error = "no-signing-key-for-version", version = major });
+            }
+
+            var features = (data.Features ?? new List<string>()).Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a.Trim()).Distinct().ToList();
+            var signed = _licenseManager.CreateLicense(data.MaxDatapoints, data.MaxUsers, coreServer.ObjId, data.ExpiresAt,
+                data.LicensedTo, data.Email, data.AllowRemoteControl, data.MaxRemoteTunnels, data.MaxRecordingDataPoints,
+                data.MaxSatellites, data.AllowTextToSpeech, features);
+
+            var old = await _db.Licenses.Where(a => a.This2CoreServer == coreServer.ObjId).ToListAsync();
+            _db.Licenses.RemoveRange(old);
+
+            var license = new License
+            {
+                ObjId = Guid.NewGuid(),
+                This2CoreServer = coreServer.ObjId,
+                This2VersionKey = key.ObjId,
+                LicenseKey = signed,
+                MaxDatapoints = data.MaxDatapoints,
+                MaxUsers = data.MaxUsers,
+                MaxRemoteTunnels = data.MaxRemoteTunnels,
+                LicensedTo = data.LicensedTo,
+                Email = data.Email,
+                FeaturesString = string.Join(",", features),
+                AllowRemoteControl = data.AllowRemoteControl,
+                MaxRecordingDataPoints = data.MaxRecordingDataPoints,
+                MaxSatellites = data.MaxSatellites,
+                ExpiresAt = data.ExpiresAt,
+                AllowTextToSpeech = data.AllowTextToSpeech,
+                This2CoreServerNavigation = coreServer
             };
+            _db.Licenses.Add(license);
+            await _db.SaveChangesAsync();
+
+            return LicenseDto.From(license);
         }
 
-        [HttpGet, Route(""), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public IList<License> GetLicenses()
+        /// <summary>Creates the signing key pair for a core major version (if missing) and returns the public key.</summary>
+        [HttpPost("signingKey/{major:int}"), Authorize(Policy = Policies.SysAdmin)]
+        public ActionResult<object> GenerateSigningKey(int major)
         {
-            return Context.Licenses.Include(a => a.This2CoreServerNavigation).ToList();
-        }
-
-        [HttpGet, Route("demo"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public string CreateDemoLicense()
-        {
-            return LicenseManager.CreateDemoLicense();
-        }
-
-
-        [HttpGet, Route("features"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public List<PluginFeature> GetAllPluginFeatures()
-        {
-            var pluginFeatures = Context.PluginFeatures.Distinct().ToList();
-
-           var distinctFeatures = pluginFeatures
-                .GroupBy(p => p.FeatureName)
-                .Select(g => g.First())
-                .ToList();
-
-           return distinctFeatures;
-        }
-
-        [HttpDelete, Route("{objId}"), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public void Delete(Guid objId)
-        {
-            var coreServerVersion = Context.Licenses.SingleOrDefault(a => a.ObjId == objId);
-
-            if (coreServerVersion != null)
+            if (major < 0 || major > 1000)
             {
-                Context.Remove(coreServerVersion);
-                Context.SaveChanges();
+                return BadRequest();
             }
-        }
-
-        [HttpPost, Route("license/{apiKey}"), NeedsRole(UserRole.SystemAdministrator), AuthorizeRole(Role = UserRole.SystemAdministrator)]
-        public License GenerateLicense( [FromBody]GenerateLicenseData generateLicenseData)
-        {
-            var coreServer = Context.CoreServers.Single(a => a.ObjId == generateLicenseData.This2CoreServer);
-            var key = Context.LicenseKeys.SingleOrDefault(a => a.Version == coreServer.VersionObj.Major);
-
-            var dbLicense = Context.Licenses.SingleOrDefault(a => a.ObjId == generateLicenseData.ObjId);
-            var isNew = false;
-            if (dbLicense == null)
-            {
-                isNew = true;
-                dbLicense = new License();
-            }
-
-            var oldLicenses = Context.Licenses.Where(a => a.This2CoreServer == generateLicenseData.This2CoreServer).ToList();
-
-            foreach (var oldLicense in oldLicenses)
-            {
-                Context.Licenses.Remove(oldLicense);
-            }
-
-            dbLicense.This2CoreServer = generateLicenseData.This2CoreServer;
-            dbLicense.This2VersionKey = key.ObjId;
-            
-            dbLicense.LicenseKey = LicenseManager.CreateLicense(generateLicenseData.MaxDatapoints, 
-                generateLicenseData.MaxUsers, 
-                generateLicenseData.This2CoreServer, 
-                generateLicenseData.ExpiresAt, 
-                generateLicenseData.LicensedTo, 
-                generateLicenseData.Email, 
-                generateLicenseData.AllowRemoteControl, 
-                generateLicenseData.MaxRemoteTunnels, 
-                generateLicenseData.MaxRecordingDataPoints, 
-                generateLicenseData.MaxSatellites, 
-                generateLicenseData.AllowTextToSpeech, 
-                generateLicenseData.Features); 
-
-            dbLicense.MaxDatapoints = generateLicenseData.MaxDatapoints;
-            dbLicense.MaxUsers = generateLicenseData.MaxUsers;
-            dbLicense.MaxRemoteTunnels = generateLicenseData.MaxRemoteTunnels;
-            dbLicense.LicensedTo = generateLicenseData.LicensedTo;
-            dbLicense.Email = generateLicenseData.LicensedTo;
-            dbLicense.FeaturesString = string.Join(",", generateLicenseData.Features);
-            dbLicense.AllowRemoteControl = generateLicenseData.AllowRemoteControl;
-            dbLicense.MaxRecordingDataPoints = generateLicenseData.MaxRecordingDataPoints;
-            dbLicense.MaxSatellites = generateLicenseData.MaxSatellites;
-            dbLicense.ExpiresAt  = generateLicenseData.ExpiresAt;
-            dbLicense.AllowTextToSpeech = generateLicenseData.AllowTextToSpeech;
-
-            if (isNew)
-            {
-                Context.Add(dbLicense);
-            }
-            else
-            {
-                Context.Update(dbLicense);
-            }
-            Context.SaveChanges();
-
-            return dbLicense;
+            var publicKey = _licenseManager.GeneratePublicPrivateKey(new Version(major, 0));
+            return new { version = major.ToString(), @public = publicKey };
         }
     }
 }

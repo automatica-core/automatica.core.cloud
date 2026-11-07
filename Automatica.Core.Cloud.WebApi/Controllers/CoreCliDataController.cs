@@ -1,171 +1,134 @@
-﻿using Automatica.Core.Cloud.WebApi.Authentication;
-using Automatica.Core.Cloud.WebApi.Update;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Asp.Versioning;
 using Automatica.Core.Cloud.EF.Models;
-using ServerVersion = Microsoft.EntityFrameworkCore.ServerVersion;
+using Automatica.Core.Cloud.WebApi.Authentication;
+using Automatica.Core.Cloud.WebApi.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 namespace Automatica.Core.Cloud.WebApi.Controllers
 {
-    [Route("webapi/v{version:apiVersion}/coreCliData"), ApiVersion("1.0")]
+    /// <summary>
+    /// automatica-cli (CI) endpoints. Same routes as before, but the trailing {apiKey} segment (or the
+    /// X-Automatica-Deploy-Key header) must be a scoped deploy key; user api keys no longer work.
+    /// </summary>
     [AllowAnonymous]
-    [UserApiKeyAuthorization] // API Key must be at the last position!!
-    [NeedsRole(UserRole.SystemAdministrator)]
+    [Route("webapi/v{version:apiVersion}/coreCliData"), ApiVersion("1.0")]
+    [DeployKey]
+    [EnableRateLimiting(RateLimits.Cli)]
     [DisableRequestSizeLimit]
-    public class CoreCliDataController : AzureStorageController
+    public class CoreCliDataController : BaseController
     {
-        public CoreCliDataController(CoreContext dbContext, IConfiguration config, ILogger<CoreCliDataController> logger) : base(config)
+        private readonly CoreContext _db;
+        private readonly PackageService _packages;
+
+        public CoreCliDataController(CoreContext db, PackageService packages)
         {
-            DbContext = dbContext;
-            Logger = logger;
+            _db = db;
+            _packages = packages;
         }
 
-        public CoreContext DbContext { get; }
-        public ILogger Logger { get; }
-        
+        private async Task<User> PublisherAsync()
+        {
+            var key = HttpContext.GetDeployKey();
+            return await _db.Users.SingleAsync(a => a.ObjId == key.This2User);
+        }
 
         [HttpPost, Route("deployPlugin/{deleteOldPackages}/{branch}/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
-        public async Task DeployPluginAndDelete(Guid apiKey, bool deleteOldPackages, string branch)
+        [RequireDeployScope(DeployKeyScope.DeployPlugin)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1L << 30)]
+        public async Task DeployPluginAndDelete(bool deleteOldPackages, string branch)
         {
-            var container = GetCloudBlobContainer();
-            var myFile = Request.Form.Files[0];
-
-            var manifest = await PluginHelper.UploadAndSave(DbContext, Logger, myFile, container, apiKey, branch);
-
-            if(deleteOldPackages)
-            {
-                // delete only other plugins with the same min core server version to stay compatible
-                var others = DbContext.Plugins.ToList().Where(a => a.VersionObj < manifest.Automatica.PluginVersion && a.MinCoreServerVersionObj == manifest.Automatica.MinCoreServerVersion && a.Name == manifest.Automatica.Name && a.Branch == branch);
-
-                foreach(var other in others)
-                {
-                    await using var newDbContext = new CoreContext(Config);
-                    await PluginsController.DeletePlugin(newDbContext, GetCloudBlobContainer(), other);
-                }
-            }
+            var file = Request.Form.Files[0];
+            await _packages.DeployPluginAsync(file, await PublisherAsync(), branch, deleteOldPackages, HttpContext.RequestAborted);
         }
 
         [HttpPost, Route("deployPlugin/{deleteOldPackages}/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
-        public async Task DeployPluginAndDeleteWithoutSpecificBranch(Guid apiKey, bool deleteOldPackages)
+        [RequireDeployScope(DeployKeyScope.DeployPlugin)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1L << 30)]
+        public Task DeployPluginAndDeleteWithoutSpecificBranch(bool deleteOldPackages)
         {
-            await DeployPluginAndDelete(apiKey, deleteOldPackages, "develop");
+            return DeployPluginAndDelete(deleteOldPackages, "develop");
         }
 
         [HttpPost, Route("deployPlugin/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
-        public async Task DeployPlugin(Guid apiKey)
+        [RequireDeployScope(DeployKeyScope.DeployPlugin)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1L << 30)]
+        public Task DeployPlugin()
         {
-            await DeployPluginAndDelete(apiKey, false, "develop");
+            return DeployPluginAndDelete(false, "develop");
         }
 
         [HttpPost, Route("deploy/{branch}/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
+        [RequireDeployScope(DeployKeyScope.DeployUpdate)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1L << 30)]
         public async Task Deploy(string branch)
         {
-            var container = GetCloudBlobContainer();
-            var myFile = Request.Form.Files[0];
-
-            var manifest = await UpdateHelper.GetUpdateManifest(myFile, Logger);
-
-            if (manifest == null)
-            {
-                throw new ArgumentException("Invalid file...");
-            }
-            var version = DbContext.Versions.ToList().SingleOrDefault(a => a.VersionObj == manifest.Version && a.Rid == manifest.Rid);
-            var isNewUpdate = false;
-
-            if (version == null)
-            {
-                isNewUpdate = true;
-                version = new EF.Models.ServerVersion()
-                {
-                    IsPreRelease = manifest.PreRelease,
-                    Rid = manifest.Rid,
-                    ChangeLog = "",
-                    Version = manifest.Version.ToString(),
-                    Branch = branch
-                };
-            }
-            if (await UpdateHelper.UploadUpdateFile(Logger, myFile, container, version))
-            {
-
-                if (isNewUpdate)
-                {
-                    DbContext.Versions.Add(version);
-                }
-                else
-                {
-                    DbContext.Versions.Update(version);
-                }
-                await DbContext.SaveChangesAsync();
-            }
-        }
-
-        [HttpPost, Route("deployDocker/{branch}/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
-        public async Task<ServerDockerVersion> DeployDocker([FromBody]ServerDockerVersion serverDockerVersion, [FromRoute]string branch)
-        {
-            var coreServerVersion = DbContext.DockerVersions.SingleOrDefault(a => a.ObjId == serverDockerVersion.ObjId);
-
-            if (coreServerVersion != null)
-            {
-                coreServerVersion.Version = serverDockerVersion.Version;
-                coreServerVersion.IsPreRelease = serverDockerVersion.IsPreRelease;
-                coreServerVersion.IsPublic = serverDockerVersion.IsPublic;
-                coreServerVersion.ChangeLog = serverDockerVersion.ChangeLog;
-                coreServerVersion.Branch = branch;
-                coreServerVersion.ImageName = serverDockerVersion.ImageName;
-                coreServerVersion.ImageTag = serverDockerVersion.ImageTag;
-                DbContext.DockerVersions.Update(coreServerVersion);
-            }
-            else
-            {
-                DbContext.DockerVersions.Add(serverDockerVersion);
-            }
-            await DbContext.SaveChangesAsync();
-
-            return serverDockerVersion;
+            var file = Request.Form.Files[0];
+            await _packages.DeployUpdateAsync(file, branch, HttpContext.RequestAborted);
         }
 
         [HttpPost, Route("deploy/{apiKey}")]
-        [DisableRequestSizeLimit]
-        [NeedsRole(UserRole.SystemAdministrator)]
+        [RequireDeployScope(DeployKeyScope.DeployUpdate)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 1L << 30)]
         public Task Deploy()
         {
             return Deploy("develop");
         }
 
+        [HttpPost, Route("deployDocker/{branch}/{apiKey}")]
+        [RequireDeployScope(DeployKeyScope.DeployDocker)]
+        public async Task<ServerDockerVersion> DeployDocker([FromBody] ServerDockerVersion serverDockerVersion, [FromRoute] string branch)
+        {
+            if (!PackageService.IsValidBranch(branch) || serverDockerVersion == null || !Version.TryParse(serverDockerVersion.Version, out _))
+            {
+                throw new ArgumentException("Invalid docker version");
+            }
+
+            var existing = await _db.DockerVersions.SingleOrDefaultAsync(a => a.ObjId == serverDockerVersion.ObjId);
+            if (existing != null)
+            {
+                existing.Version = serverDockerVersion.Version;
+                existing.IsPreRelease = serverDockerVersion.IsPreRelease;
+                existing.IsPublic = serverDockerVersion.IsPublic;
+                existing.ChangeLog = serverDockerVersion.ChangeLog;
+                existing.Branch = branch;
+                existing.ImageName = serverDockerVersion.ImageName;
+                existing.ImageTag = serverDockerVersion.ImageTag;
+            }
+            else
+            {
+                serverDockerVersion.Branch = branch;
+                _db.DockerVersions.Add(serverDockerVersion);
+            }
+            await _db.SaveChangesAsync();
+
+            return serverDockerVersion;
+        }
+
         [HttpGet, Route("plugins/{coreServerVersion}/{apiKey}")]
-        [NeedsRole(UserRole.SystemAdministrator)]
+        [RequireDeployScope(DeployKeyScope.ReadPlugins)]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion)
         {
             return GetAvailablePlugins(coreServerVersion, "develop");
         }
 
         [HttpGet, Route("plugins/{coreServerVersion}/{branch}/{apiKey}")]
-        [NeedsRole(UserRole.SystemAdministrator)]
+        [RequireDeployScope(DeployKeyScope.ReadPlugins)]
         public IEnumerable<Plugin> GetAvailablePlugins(string coreServerVersion, string branch)
         {
-            using var dbContext = new CoreContext(Config);
             var versionObj = new Version(coreServerVersion);
-            var versions = dbContext.Plugins.Where(a => a.Branch == branch).ToList().Where(a => versionObj >= a.MinCoreServerVersionObj);
+            var versions = _db.Plugins.AsNoTracking().Where(a => a.Branch == branch).ToList()
+                .Where(a => a.MinCoreServerVersionObj != null && versionObj >= a.MinCoreServerVersionObj);
 
             return from r in versions
-                group r by r.PluginGuid into g
-                select g.OrderByDescending(x => x.VersionObj).First();
+                   group r by r.PluginGuid into g
+                   select g.OrderByDescending(x => x.VersionObj).First();
         }
     }
 }
